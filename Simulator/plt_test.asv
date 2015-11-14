@@ -1,0 +1,178 @@
+clear all;close all;clc
+
+load hydrodata_cs1d3m_D_3E5 
+
+A11_wam = data.hydro.A11;
+A12_wam = data.hydro.A12;
+A21_wam = data.hydro.A21;
+A22_wam = data.hydro.A22;
+
+B11_wam = data.hydro.B11;
+B12_wam = data.hydro.B12;
+B21_wam = data.hydro.B21;
+B22_wam = data.hydro.B22;
+
+freqs_wam = data.hydro.freqs;
+
+Nfreqs_wam = size(freqs,2);
+
+a12_wam_11 = zeros(Nfreqs_wam,1);
+a12_wam_22 = zeros(Nfreqs_wam,1);
+a12_wam_66 = zeros(Nfreqs_wam,1);
+
+a22_wam_11 = zeros(Nfreqs_wam,1);
+a22_wam_22 = zeros(Nfreqs_wam,1);
+a22_wam_66 = zeros(Nfreqs_wam,1);
+
+b12_wam_11 = zeros(Nfreqs_wam,1);
+b12_wam_22 = zeros(Nfreqs_wam,1);
+b12_wam_66 = zeros(Nfreqs_wam,1);
+
+b22_wam_11 = zeros(Nfreqs_wam,1);
+b22_wam_22 = zeros(Nfreqs_wam,1);
+b22_wam_66 = zeros(Nfreqs_wam,1);
+
+for k1 = 1:Nfreqs_wam
+    a12_wam_11(k1) = A12_wam(1,1,k1);
+    a12_wam_22(k1) = A12_wam(2,2,k1);
+    a12_wam_66(k1) = A12_wam(6,6,k1);
+    
+    a22_wam_11(k1) = A22_wam(1,1,k1);
+    a22_wam_22(k1) = A22_wam(2,2,k1);
+    a22_wam_66(k1) = A22_wam(6,6,k1);
+    
+    b12_wam_11(k1) = B12_wam(1,1,k1);
+    b12_wam_22(k1) = B12_wam(2,2,k1);
+    b12_wam_66(k1) = B12_wam(6,6,k1);
+    
+    b22_wam_11(k1) = B22_wam(1,1,k1);
+    b22_wam_22(k1) = B22_wam(2,2,k1);
+    b22_wam_66(k1) = B22_wam(6,6,k1);
+end
+
+load hydrodata_cs1d3m_D_3E5_old 
+
+A11_old = data.hydro.A11;
+A12_old = data.hydro.A12;
+A21_old = data.hydro.A21;
+A22_old = data.hydro.A22;
+
+B11_old = data.hydro.B11;
+B12_old = data.hydro.B12;
+B21_old = data.hydro.B21;
+B22_old = data.hydro.B22;
+
+freqs_old = data.hydro.freqs;
+
+Nfreqs_old = size(freqs,2);
+
+a12_old_11 = zeros(Nfreqs_old,1);
+a12_old_22 = zeros(Nfreqs_old,1);
+a12_old_66 = zeros(Nfreqs_old,1);
+
+a22_old_11 = zeros(Nfreqs_old,1);
+a22_old_22 = zeros(Nfreqs_old,1);
+a22_old_66 = zeros(Nfreqs_old,1);
+
+b12_old_11 = zeros(Nfreqs_old,1);
+b12_old_22 = zeros(Nfreqs_old,1);
+b12_old_66 = zeros(Nfreqs_old,1);
+
+b22_old_11 = zeros(Nfreqs_old,1);
+b22_old_22 = zeros(Nfreqs_old,1);
+b22_old_66 = zeros(Nfreqs_old,1);
+
+for k1 = 1:Nfreqs_old
+    a12_old_11(k1) = A12_old(1,1,k1);
+    a12_old_22(k1) = A12_old(2,2,k1);
+    a12_old_66(k1) = A12_old(6,6,k1);
+    
+    a22_old_11(k1) = A22_old(1,1,k1);
+    a22_old_22(k1) = A22_old(2,2,k1);
+    a22_old_66(k1) = A22_old(6,6,k1);
+    
+    b12_old_11(k1) = B12_old(1,1,k1);
+    b12_old_22(k1) = B12_old(2,2,k1);
+    b12_old_66(k1) = B12_old(6,6,k1);
+    
+    b22_old_11(k1) = B22_old(1,1,k1);
+    b22_old_22(k1) = B22_old(2,2,k1);
+    b22_old_66(k1) = B22_old(6,6,k1);
+end
+
+figure(1)
+subplot(3,2,1)
+plot(freqs,a12_wam_11)
+hold on
+plot(freqs,a12_old_11,'r')
+grid on
+xlabel('Frequency (rad/s)')
+ylabel('a_{11} - FPSO on PSV [t]')
+subplot(3,2,2)
+plot(freqs,b12_wam_11)
+hold on
+plot(freqs,b12_old_12,'r')
+grid on
+xlabel('Frequency (rad/s)')
+ylabel('b_{11} - FPSO on PSV [kN.s/m]')
+subplot(3,2,3)
+plot(freqs,a12_wam_22)
+hold on
+plot(freqs,a12_old_22,'r')
+grid on
+xlabel('Frequency (rad/s)')
+ylabel('a_{22} - FPSO on PSV [t]')
+subplot(3,2,4)
+plot(freqs,b12_wam_22)
+hold on
+plot(freqs,b12_old_22,'r')
+grid on
+xlabel('Frequency (rad/s)')
+ylabel('b_{22} - FPSO on PSV [kN.s/m]')
+subplot(3,2,5)
+plot(freqs,a12_wam_66)
+hold on
+plot(freqs,a12_old_66,'r')
+grid on
+xlabel('Frequency (rad/s)')
+ylabel('a_{66} - FPSO on PSV [t.m]')
+subplot(3,2,6)
+plot(freqs,b12_wam_66)
+hold on
+plot(freqs,b12_old_66,'r')
+grid on
+xlabel('Frequency (rad/s)')
+ylabel('b_{66} - FPSO on PSV [kN.s]')
+
+figure(2)
+subplot(3,2,1)
+plot(freqs,a22_wam_11)
+grid on
+xlabel('Frequency (rad/s)')
+ylabel('a_{11} - PSV [t]')
+subplot(3,2,2)
+plot(freqs,b22_wam_11)
+grid on
+xlabel('Frequency (rad/s)')
+ylabel('b_{11} - PSV [kN.s/m]')
+subplot(3,2,3)
+plot(freqs,a22_wam_22)
+grid on
+xlabel('Frequency (rad/s)')
+ylabel('a_{22} - PSV [t]')
+subplot(3,2,4)
+plot(freqs,b22_wam_22)
+grid on
+xlabel('Frequency (rad/s)')
+ylabel('b_{22} - PSV [kN.s/m]')
+subplot(3,2,5)
+plot(freqs,a22_wam_66)
+grid on
+xlabel('Frequency (rad/s)')
+ylabel('a_{66} - PSV [t.m]')
+subplot(3,2,6)
+plot(freqs,b22_wam_66)
+grid on
+xlabel('Frequency (rad/s)')
+ylabel('b_{66} - PSV [kN.s]')
+
