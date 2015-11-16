@@ -67,6 +67,9 @@ else
 end
 Nomg = length(omg); % Update Nomg
 
+% If the file 
+
+
 % If the file brings data for infinite frequency (T = 0 s), it will be assigned 
 % as "Inf" in the array of frequencies. It should then be replaced by 10 rad/s
 % Therefore, the last element is replaced, the incremented frequency is
@@ -90,9 +93,6 @@ B12 = zeros(6,6,Nomg);
 B21 = zeros(6,6,Nomg);
 B22 = zeros(6,6,Nomg);
 
-
-
-
 if omg_zero == 0
     A11(:,:,1) = Aij_sorted(1:6,1:6,1);
     A12(:,:,1) = Aij_sorted(1:6,7:12,1);
@@ -102,15 +102,15 @@ if omg_zero == 0
     B12(:,:,1) = zeros(6,6,Nomg);
     B21(:,:,1) = zeros(6,6,Nomg);
     B22(:,:,1) = zeros(6,6,Nomg);
+    A11(:,:,2:Nomg-2) = Aij_sorted(1:6,1:6,:);
+    A12(:,:,2:Nomg-2) = Aij_sorted(1:6,7:12,:);
+    A21(:,:,2:Nomg-2) = Aij_sorted(7:12,1:6,:);
+    A22(:,:,2:Nomg-2) = Aij_sorted(7:12,7:12,:);
+    B11(:,:,2:Nomg-2) = Bij_sorted(1:6,1:6,:);
+    B12(:,:,2:Nomg-2) = Bij_sorted(1:6,7:12,:);
+    B21(:,:,2:Nomg-2) = Bij_sorted(7:12,1:6,:);
+    B22(:,:,2:Nomg-2) = Bij_sorted(7:12,7:12,:);
     if omg_inf == 0
-        A11(:,:,2:Nomg-2) = Aij_sorted(1:6,1:6,:);
-        A12(:,:,2:Nomg-2) = Aij_sorted(1:6,7:12,:);
-        A21(:,:,2:Nomg-2) = Aij_sorted(7:12,1:6,:);
-        A22(:,:,2:Nomg-2) = Aij_sorted(7:12,7:12,:);    
-        B11(:,:,2:Nomg-2) = Bij_sorted(1:6,1:6,:);
-        B12(:,:,2:Nomg-2) = Bij_sorted(1:6,7:12,:);
-        B21(:,:,2:Nomg-2) = Bij_sorted(7:12,1:6,:);
-        B22(:,:,2:Nomg-2) = Bij_sorted(7:12,7:12,:); 
         A11(:,:,Nomg-1) = Aij_sorted(1:6,1:6,Nomg-2);
         A12(:,:,Nomg-1) = Aij_sorted(1:6,7:12,Nomg-2);
         A21(:,:,Nomg-1) = Aij_sorted(7:12,1:6,Nomg-2);
@@ -127,11 +127,19 @@ if omg_zero == 0
         B12(:,:,Nomg) = zeros(6,6,Nomg);
         B21(:,:,Nomg) = zeros(6,6,Nomg);
         B22(:,:,Nomg) = zeros(6,6,Nomg);
-    else
-        A11(:,:,2:Nomg-2) = Aij_sorted(1:6,1:6,:);
-        A12(:,:,2:Nomg-2) = Aij_sorted(1:6,7:12,:);
-        A21(:,:,2:Nomg-2) = Aij_sorted(7:12,1:6,:);
-        A22(:,:,2:Nomg-2) = Aij_sorted(7:12,7:12,:);  
+    elseif omg_inf == 1
+        A11(:,:,Nomg-1) = Aij_sorted(1:6,1:6,Nomg-1);
+        A12(:,:,Nomg-1) = Aij_sorted(1:6,7:12,Nomg-1);
+        A21(:,:,Nomg-1) = Aij_sorted(7:12,1:6,Nomg-1);
+        A22(:,:,Nomg-1) = Aij_sorted(7:12,7:12,Nomg-1);  
+        B11(:,:,Nomg-1) = zeros(6,6,Nomg);
+        B12(:,:,Nomg-1) = zeros(6,6,Nomg);
+        B21(:,:,Nomg-1) = zeros(6,6,Nomg);
+        B22(:,:,Nomg-1) = zeros(6,6,Nomg);
+        A11(:,:,Nomg) = Aij_sorted(1:6,1:6,Nomg-2);
+        A12(:,:,Nomg) = Aij_sorted(1:6,7:12,Nomg-2);
+        A21(:,:,Nomg) = Aij_sorted(7:12,1:6,Nomg-2);
+        A22(:,:,Nomg) = Aij_sorted(7:12,7:12,Nomg-2); 
     end
 else
 end
