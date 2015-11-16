@@ -90,21 +90,43 @@ B12 = zeros(6,6,Nomg);
 B21 = zeros(6,6,Nomg);
 B22 = zeros(6,6,Nomg);
 
-A11(:,:,1) = Aij_sorted(1:6,1:6,1);
-A12(:,:,1) = Aij_sorted(1:6,7:12,1);
-A21(:,:,1) = Aij_sorted(7:12,1:6,1);
-A22(:,:,1) = Aij_sorted(7:12,7:12,1);
-B11(:,:,1) = Bij_sorted(1:6,1:6,1);
-B12(:,:,1) = Bij_sorted(1:6,7:12,1);
-B21(:,:,1) = Bij_sorted(7:12,1:6,1);
-B22(:,:,1) = Bij_sorted(7:12,7:12,1);
+
+
 
 if omg_zero == 0
+    A11(:,:,1) = Aij_sorted(1:6,1:6,1);
+    A12(:,:,1) = Aij_sorted(1:6,7:12,1);
+    A21(:,:,1) = Aij_sorted(7:12,1:6,1);
+    A22(:,:,1) = Aij_sorted(7:12,7:12,1);
+    B11(:,:,1) = zeros(6,6,Nomg);
+    B12(:,:,1) = zeros(6,6,Nomg);
+    B21(:,:,1) = zeros(6,6,Nomg);
+    B22(:,:,1) = zeros(6,6,Nomg);
     if omg_inf == 0
         A11(:,:,2:Nomg-2) = Aij_sorted(1:6,1:6,:);
         A12(:,:,2:Nomg-2) = Aij_sorted(1:6,7:12,:);
         A21(:,:,2:Nomg-2) = Aij_sorted(7:12,1:6,:);
-        A22(:,:,2:Nomg-2) = Aij_sorted(7:12,7:12,:);        
+        A22(:,:,2:Nomg-2) = Aij_sorted(7:12,7:12,:);    
+        B11(:,:,2:Nomg-2) = Bij_sorted(1:6,1:6,:);
+        B12(:,:,2:Nomg-2) = Bij_sorted(1:6,7:12,:);
+        B21(:,:,2:Nomg-2) = Bij_sorted(7:12,1:6,:);
+        B22(:,:,2:Nomg-2) = Bij_sorted(7:12,7:12,:); 
+        A11(:,:,Nomg-1) = Aij_sorted(1:6,1:6,Nomg-2);
+        A12(:,:,Nomg-1) = Aij_sorted(1:6,7:12,Nomg-2);
+        A21(:,:,Nomg-1) = Aij_sorted(7:12,1:6,Nomg-2);
+        A22(:,:,Nomg-1) = Aij_sorted(7:12,7:12,Nomg-2);    
+        B11(:,:,Nomg-1) = zeros(6,6,Nomg);
+        B12(:,:,Nomg-1) = zeros(6,6,Nomg);
+        B21(:,:,Nomg-1) = zeros(6,6,Nomg);
+        B22(:,:,Nomg-1) = zeros(6,6,Nomg);
+        A11(:,:,Nomg) = Aij_sorted(1:6,1:6,Nomg-2);
+        A12(:,:,Nomg) = Aij_sorted(1:6,7:12,Nomg-2);
+        A21(:,:,Nomg) = Aij_sorted(7:12,1:6,Nomg-2);
+        A22(:,:,Nomg) = Aij_sorted(7:12,7:12,Nomg-2);    
+        B11(:,:,Nomg) = zeros(6,6,Nomg);
+        B12(:,:,Nomg) = zeros(6,6,Nomg);
+        B21(:,:,Nomg) = zeros(6,6,Nomg);
+        B22(:,:,Nomg) = zeros(6,6,Nomg);
     else
         A11(:,:,2:Nomg-2) = Aij_sorted(1:6,1:6,:);
         A12(:,:,2:Nomg-2) = Aij_sorted(1:6,7:12,:);
