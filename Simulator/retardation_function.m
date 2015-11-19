@@ -1,7 +1,7 @@
 function [K,dK,Tij,Nt,An,Bn,data,variable] = retardation_function(A,B,data,variable)
 
 lt = variable.lt; % Length of time array
-dt = variable.dt; % Time-step	
+dt = variable.dt; % Time-step
 freqs = data.hydro.freqs; % Frequency array, as specified for WAMIT calculations
 Nfreq = length(freqs); % Number of elements on frequency array
 w =linspace(freqs(1),2*freqs(Nfreq),100); % Frequency array
@@ -26,20 +26,20 @@ for k1 = 1:6
     for k2 = 1:6
         %B_freqs representa um vetor auxiliar com os
         %valores do elemento B(k1,k2) em todas as frequências.
-        for k3 = 1:N; 
+        for k3 = 1:N;
             B_freqs(k3) = B(k1,k2,k3);
             A_freqs(k3) = A(k1,k2,k3);
-         end
+        end
         
         %B_esp é o vetor de B linearmente espaçado, resultado da
         %interpolação de w(k3), ou seja, todas as novas frequências.
         for k3 = 1:N;
-        B_esp(k1,k2,k3) = interp1(freqs, B_freqs,w(k3),'spline');
-        A_esp(k1,k2,k3) = interp1(freqs, A_freqs,w(k3),'spline');
-        
+            B_esp(k1,k2,k3) = interp1(freqs, B_freqs,w(k3),'spline');
+            A_esp(k1,k2,k3) = interp1(freqs, A_freqs,w(k3),'spline');
+            
         end
         for k3 = 1:N; %tail of curve
-          B_esp(k1,k2,N+k3) = B_esp(k1,k2,N)/w_aux(k3)^3; % a cauda da curva será "completada" com o ultimo valor fornecido pelo WAMIT dividido por w^3, tal que esse w é a posição no eixo x.
+            B_esp(k1,k2,N+k3) = B_esp(k1,k2,N)/w_aux(k3)^3; % a cauda da curva será "completada" com o ultimo valor fornecido pelo WAMIT dividido por w^3, tal que esse w é a posição no eixo x.
         end
     end
 end
@@ -57,7 +57,7 @@ A=A_esp;
 % xlabel ('frequencia w')
 % ylabel (['A(' num2str(i) ',' num2str(i) ')' ]);
 % grid on
-% 
+%
 % B_plot=zeros(size(B,3),1);
 % figure(6)
 % B_plot(:,1)= B(i,i,:);
@@ -74,42 +74,42 @@ for k1 = 1:6
     for k2 = 1:6
         for k3 = 1:length(w);
             if k3==1
-            dB(k1,k2,k3) = B(k1,k2,k3);    
+                dB(k1,k2,k3) = B(k1,k2,k3);
             else
-            %é importante guardar dessa forma,
-            %pois posteriormente, para o calculo do (tempo limite) Tij deve-se saber o grau i e j (k1,k2)
-            %e também entre quais duas frequências é feita a diferença
-            dB(k1,k2,k3) = B(k1,k2,k3)-B(k1,k2,k3-1); 
+                %é importante guardar dessa forma,
+                %pois posteriormente, para o calculo do (tempo limite) Tij deve-se saber o grau i e j (k1,k2)
+                %e também entre quais duas frequências é feita a diferença
+                dB(k1,k2,k3) = B(k1,k2,k3)-B(k1,k2,k3-1);
             end
             
         end
     end
- end
+end
 K=zeros(6,6,lt);
- %Cálculo do K(k1,k2,1) correspondente ao instante inicial
- for k1 = 1:6
-    for k2 = 1:6   
-     K_aux=0;
+%Cálculo do K(k1,k2,1) correspondente ao instante inicial
+for k1 = 1:6
+    for k2 = 1:6
+        K_aux=0;
         for k3 = 1:length(w) %seria o omega do infinite added mass
-     K_aux = K_aux + B(k1,k2,k3)*dw;            
+            K_aux = K_aux + B(k1,k2,k3)*dw;
         end
-     K(k1,k2,1)=2/pi*K_aux;    
+        K(k1,k2,1)=2/pi*K_aux;
     end
- end
- 
-dB_soma = zeros(6,6); 
+end
+
+dB_soma = zeros(6,6);
 
 for k1 = 1:6
     for k2 = 1:6
         for k3 = 1:length(w);
-        dB_soma(k1,k2) = dB_soma(k1,k2) + abs(dB(k1,k2,k3));
+            dB_soma(k1,k2) = dB_soma(k1,k2) + abs(dB(k1,k2,k3));
         end
         e=0.010; %segundo papper de Journéé
-    Tij(k1,k2)=2*( dB_soma(k1,k2) /(pi*dw*e*K(k1,k2,1)) )^0.5;
-    Tij(k1,k2)=fix(Tij(k1,k2));
+        Tij(k1,k2)=2*( dB_soma(k1,k2) /(pi*dw*e*K(k1,k2,1)) )^0.5;
+        Tij(k1,k2)=fix(Tij(k1,k2));
     end
 end
-Tij=abs(Tij); %o que fazer quando Tij é complexo, causado por (Kij(k1,k2,0)<0)^0.5, resultado da soma dos B(k1,k2,k3)*dw que 
+Tij=abs(Tij); %o que fazer quando Tij é complexo, causado por (Kij(k1,k2,0)<0)^0.5, resultado da soma dos B(k1,k2,k3)*dw que
 %às vezes possui termos negativos, quando um grau de liberdade 'joga' energia sobre o outro?
 % Nt=abs(Nt);
 %Cálculo da função de retardo (retardation functions) até o instante Tij,sendo o time step igual a dt
@@ -120,28 +120,28 @@ Tij=abs(Tij); %o que fazer quando Tij é complexo, causado por (Kij(k1,k2,0)<0)^0
 % K(:,:,1)= aux;
 
 
- for k1 = 1:6
+for k1 = 1:6
     for k2 = 1:6
         
-      %K_aux representa a somatória de n=1 a Nw como está no Papper de Journéé
+        %K_aux representa a somatória de n=1 a Nw como está no Papper de Journéé
         
         for tau_calc= 2:lt %É necessário calcular para um grau (k1,k2) até o tempo total, exceto no instante inicial que já foi calculado.
             tau = tau_calc*dt;
             K_aux=0;
             for k3 = 1:length(w);
                 if k3==1
-            K_aux = K_aux + dB(k1,k2,k3)/dw*(cos(w(k3)*tau));
-            
+                    K_aux = K_aux + dB(k1,k2,k3)/dw*(cos(w(k3)*tau));
+                    
                 else
-            K_aux = K_aux + dB(k1,k2,k3)/dw*(cos(w(k3)*tau)-cos(w(k3-1)*tau ));
+                    K_aux = K_aux + dB(k1,k2,k3)/dw*(cos(w(k3)*tau)-cos(w(k3-1)*tau ));
                 end
             end
-       
-        K(k1,k2,tau_calc) = 2/(pi*tau^2)*K_aux + 2/(pi*tau)*B(k1,k2,length(w))*sin(w(k3)*tau);
-
+            
+            K(k1,k2,tau_calc) = 2/(pi*tau^2)*K_aux + 2/(pi*tau)*B(k1,k2,length(w))*sin(w(k3)*tau);
+            
         end
     end
- end
+end
 
 %criação do vetor delta K, que representa a diferença da retardation
 %function entre dois instantes de tempo consecutivos, para cada grau (k1,k2) de liberdade
@@ -149,15 +149,15 @@ dK= zeros(6,6,size(K,3));
 
 
 for k1=1:6
-        for k2=1:6
-            for k3=1:size(K,3)
-               if k3==1
+    for k2=1:6
+        for k3=1:size(K,3)
+            if k3==1
                 dK(k1,k2,1)= K(k1,k2,k3);
-               else
-                 dK(k1,k2,k3)= K(k1,k2,k3)-K(k1,k2,k3-1);
-               end
-           end
+            else
+                dK(k1,k2,k3)= K(k1,k2,k3)-K(k1,k2,k3-1);
+            end
         end
+    end
 end
 
 

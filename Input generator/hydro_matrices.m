@@ -153,7 +153,7 @@ else
     B22(:,:,Nomg) = zeros(6,6);
 end
 
-% Scaling of added mass and damping matrices (p. 4-3 of Wamit manual v. 6.2s)
+% Scaling of added mass and damping matrices (p. 4-3 of WAMIT manual v. 6.2s)
 % Aij = Aij' * rho * ULEN^k
 % Bij = Bij' * rho * w * ULEN^k
 % where k=3 for i,j=1,2,3, k=5 for i,j=1,2,3, k = 4 otherwise.
@@ -161,7 +161,7 @@ scaleA  = [ ones(3)*3 ones(3)*4
     ones(3)*4 ones(3)*5 ];
 
 for w = 1:Nomg
-    % scale Wamit data to SI system (Wamit axes)
+    % Scale WAMIT data to SI system (Wamit axes)
     A11_dim = A11(:,:,w)*rho .* (ULEN .^ scaleA);
     A12_dim = A12(:,:,w)*rho .* (ULEN .^ scaleA);
     A21_dim = A21(:,:,w)*rho .* (ULEN .^ scaleA);
@@ -174,7 +174,7 @@ for w = 1:Nomg
         .* (ULEN .^ scaleA);
     B22_dim = B22(:,:,w)*rho .* omg(w) ...
         .* (ULEN .^ scaleA);
-    % transform to Fossen axes
+    % Transform to Fossen axes
     A11(:,:,w) = Tscale*A11_dim*Tscale;
     A12(:,:,w) = Tscale*A12_dim*Tscale;
     A21(:,:,w) = Tscale*A21_dim*Tscale;
@@ -185,57 +185,7 @@ for w = 1:Nomg
     B22(:,:,w) = Tscale*B22_dim*Tscale;
 end
 
-for k1 = 1:Nomg
-    a11(k1) = A22(1,1,k1);
-    a22(k1) = A22(2,2,k1);
-    a33(k1) = A22(3,3,k1);
-    a44(k1) = A22(4,4,k1);
-    a55(k1) = A22(5,5,k1);
-    a66(k1) = A22(6,6,k1);    
-    b11(k1) = B22(1,1,k1);
-    b22(k1) = B22(2,2,k1);
-    b33(k1) = B22(3,3,k1);
-    b44(k1) = B22(4,4,k1);
-    b55(k1) = B22(5,5,k1);
-    b66(k1) = B22(6,6,k1); 
-end
 
-figure(1)
-plot(omg,a11)
-grid on
-figure(2)
-plot(omg,a22)
-grid on
-figure(3)
-plot(omg,a33)
-grid on
-figure(4)
-plot(omg,a44)
-grid on
-figure(5)
-plot(omg,a55)
-grid on
-figure(6)
-plot(omg,a66)
-grid on
-figure(7)
-plot(omg,b11)
-grid on
-figure(8)
-plot(omg,b22)
-grid on
-figure(9)
-plot(omg,b33)
-grid on
-figure(10)
-plot(omg,b44)
-grid on
-figure(11)
-plot(omg,b55)
-grid on
-figure(12)
-plot(omg,b66)
-grid on
 
 
 % Colocar um if aqui, e ativar apenas se o usu�rio quiser. Incluir fun��o
