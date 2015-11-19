@@ -1,4 +1,4 @@
-% clear all;close all;clc
+clear all;close all;clc
 
 % It is admitted that the WAMIT files brings either both asymptotic values (omg
 % = 0 rad/s and omg = Inf) or none of them.
@@ -64,10 +64,9 @@ d_omg = 0.01; % Incremental frequency (rad/s)
 if omg_sorted(1) == 0
     omg_asmp = 1; % Flag for indicating that the WAMIT file contains asymptotic 
     % data (i.e., omg = 0 rad/s and omg = Inf)  
-    omg = [omg(1:Nomg-1) omg(Nomg-1)+d_omg 10]; % In this case, a new frequency
-    % is included before the asymptotic infinite one, being equal the penultimate 
-    % frequency incremented with d_omg. The last value (originally omg = Inf) is 
-    % replaced by omg = 10 rad/s.                        
+    omg = [omg(1:Nomg-1) 10]; % In this case, a new frequency, the only 
+    % change is the replacement of the last value (originally omg = Inf) by 
+    % omg = 10 rad/s.                        
 else
     omg_asmp = 0; % No asymptotic data in WAMIT file
     omg = [0 omg omg(Nomg)+d_omg 10]; % In this case, omg = 0 rad/s is appended
@@ -98,10 +97,10 @@ if omg_asmp == 0
     A12(:,:,1) = Aij_sorted(1:6,7:12,1);
     A21(:,:,1) = Aij_sorted(7:12,1:6,1);
     A22(:,:,1) = Aij_sorted(7:12,7:12,1);
-    B11(:,:,1) = zeros(6,6,Nomg);
-    B12(:,:,1) = zeros(6,6,Nomg);
-    B21(:,:,1) = zeros(6,6,Nomg);
-    B22(:,:,1) = zeros(6,6,Nomg);
+    B11(:,:,1) = zeros(6,6);
+    B12(:,:,1) = zeros(6,6);
+    B21(:,:,1) = zeros(6,6);
+    B22(:,:,1) = zeros(6,6);
     % The next elements from the original data are now appended to both the added
     % mass and radiation damping matrices. Since the original omg array was
     % increased in 3 elements, the range for the new A and B matrices is 2:Nomg-2.     
@@ -116,56 +115,43 @@ if omg_asmp == 0
     % For the added mass, the value corresponding to the incremented frequency
     % equals the previous one (i.e., the last value in the original file). For
     % the radiation damping, it is already assigned to zero.
-    A11(:,:,2:Nomg-1) = Aij_sorted(1:6,1:6,Nomg-3);
-    A12(:,:,2:Nomg-1) = Aij_sorted(1:6,7:12,Nomg-3);
-    A21(:,:,2:Nomg-1) = Aij_sorted(7:12,1:6,Nomg-3);
-    A22(:,:,2:Nomg-1) = Aij_sorted(7:12,7:12,Nomg-3);
-    B11(:,:,2:Nomg-2) = zeros(6,6,Nomg);
-    B12(:,:,2:Nomg-2) = zeros(6,6,Nomg);
-    B21(:,:,2:Nomg-2) = zeros(6,6,Nomg);
-    B22(:,:,2:Nomg-2) = zeros(6,6,Nomg);
-    % Finally
- 
+    A11(:,:,Nomg-1) = Aij_sorted(1:6,1:6,Nomg-3);
+    A12(:,:,Nomg-1) = Aij_sorted(1:6,7:12,Nomg-3);
+    A21(:,:,Nomg-1) = Aij_sorted(7:12,1:6,Nomg-3);
+    A22(:,:,Nomg-1) = Aij_sorted(7:12,7:12,Nomg-3);
+    B11(:,:,Nomg-1) = zeros(6,6);
+    B12(:,:,Nomg-1) = zeros(6,6);
+    B21(:,:,Nomg-1) = zeros(6,6);
+    B22(:,:,Nomg-1) = zeros(6,6);
+    % Finally, the last value for the added mass is again set equal the
+    % previous one. For the radiation damping, it is again set as zero.
+    A11(:,:,Nomg) = Aij_sorted(1:6,1:6,Nomg-3);
+    A12(:,:,Nomg) = Aij_sorted(1:6,7:12,Nomg-3);
+    A21(:,:,Nomg) = Aij_sorted(7:12,1:6,Nomg-3);
+    A22(:,:,Nomg) = Aij_sorted(7:12,7:12,Nomg-3);
+    B11(:,:,Nomg) = zeros(6,6);
+    B12(:,:,Nomg) = zeros(6,6);
+    B21(:,:,Nomg) = zeros(6,6);
+    B22(:,:,Nomg) = zeros(6,6); 
 else
+    % In the case the WAMIT data contains values for asymptoticaly zero and 
+    % infinite frequencies, the only worry is to ensure that the the 
+    % radiation damping is zero for omg = 0 rad/s and for omg = Inf. All
+    % the other elements (including added mass) are kept as provided by 
+    % WAMIT.
+    A11(:,:,1:Nomg) = Aij_sorted(1:6,1:6,1:Nomg);
+    A12(:,:,1:Nomg) = Aij_sorted(1:6,7:12,1:Nomg);
+    A21(:,:,1:Nomg) = Aij_sorted(7:12,1:6,1:Nomg);
+    A22(:,:,1:Nomg) = Aij_sorted(7:12,7:12,1:Nomg);
+    B11(:,:,1) = zeros(6,6);
+    B12(:,:,1) = zeros(6,6);
+    B21(:,:,1) = zeros(6,6);
+    B22(:,:,1) = zeros(6,6);
+    B11(:,:,Nomg) = zeros(6,6);
+    B12(:,:,Nomg) = zeros(6,6);
+    B21(:,:,Nomg) = zeros(6,6);
+    B22(:,:,Nomg) = zeros(6,6);
 end
-
-A11(:,:,2:Nomg-1) = Aij_sorted(1:6,1:6,:);
-A12(:,:,2:Nomg-1) = Aij_sorted(1:6,7:12,:);
-A21(:,:,2:Nomg-1) = Aij_sorted(7:12,1:6,:);
-A22(:,:,2:Nomg-1) = Aij_sorted(7:12,7:12,:);
-
-
-
-B11(:,:,2:Nomg-1) = Bij_sorted(1:6,1:6,:);
-
-B12(:,:,2:Nomg-1) = Bij_sorted(1:6,7:12,:);
-
-B21(:,:,2:Nomg-1)= Bij_sorted(7:12,1:6,:);
-
-B22(:,:,2:Nomg-1)= Bij_sorted(7:12,7:12,:);
-
-% Define the added mass for omg = 0 rad/s equal to the first value provided by WAMIT
-A11(:,:,1) = A11(:,:,2);
-A12(:,:,1) = A12(:,:,2);
-A21(:,:,1) = A21(:,:,2);
-A22(:,:,1) = A22(:,:,2);
-
-% Define the added mass for omg = 10 rad/s equal to the last value (highest frequency)
-A11(:,:,Nomg) = A11(:,:,Nomg-1);
-A12(:,:,Nomg) = A12(:,:,Nomg-1);
-A21(:,:,Nomg) = A21(:,:,Nomg-1);
-A22(:,:,Nomg) = A22(:,:,Nomg-1);
-
-% Define the radiation damping for omg = 0 rad/s and for omg = 10 rad/s equal to zero
-B11(:,:,1) = 0;
-B12(:,:,1) = 0;
-B21(:,:,1) = 0;
-B22(:,:,1) = 0;
-B11(:,:,Nomg) = 0;
-B12(:,:,Nomg) = 0;
-B21(:,:,Nomg) = 0;
-B22(:,:,Nomg) = 0;
-
 
 % Scaling of added mass and damping matrices (p. 4-3 of Wamit manual v. 6.2s)
 % Aij = Aij' * rho * ULEN^k
@@ -198,6 +184,59 @@ for w = 1:Nomg
     B21(:,:,w) = Tscale*B21_dim*Tscale;
     B22(:,:,w) = Tscale*B22_dim*Tscale;
 end
+
+for k1 = 1:Nomg
+    a11(k1) = A22(1,1,k1);
+    a22(k1) = A22(2,2,k1);
+    a33(k1) = A22(3,3,k1);
+    a44(k1) = A22(4,4,k1);
+    a55(k1) = A22(5,5,k1);
+    a66(k1) = A22(6,6,k1);    
+    b11(k1) = B22(1,1,k1);
+    b22(k1) = B22(2,2,k1);
+    b33(k1) = B22(3,3,k1);
+    b44(k1) = B22(4,4,k1);
+    b55(k1) = B22(5,5,k1);
+    b66(k1) = B22(6,6,k1); 
+end
+
+figure(1)
+plot(omg,a11)
+grid on
+figure(2)
+plot(omg,a22)
+grid on
+figure(3)
+plot(omg,a33)
+grid on
+figure(4)
+plot(omg,a44)
+grid on
+figure(5)
+plot(omg,a55)
+grid on
+figure(6)
+plot(omg,a66)
+grid on
+figure(7)
+plot(omg,b11)
+grid on
+figure(8)
+plot(omg,b22)
+grid on
+figure(9)
+plot(omg,b33)
+grid on
+figure(10)
+plot(omg,b44)
+grid on
+figure(11)
+plot(omg,b55)
+grid on
+figure(12)
+plot(omg,b66)
+grid on
+
 
 % Colocar um if aqui, e ativar apenas se o usu�rio quiser. Incluir fun��o
 % do andrey
