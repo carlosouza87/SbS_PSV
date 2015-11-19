@@ -1,5 +1,7 @@
 % clear all;close all;clc
-% clear variables;close all;clc
+
+% It is admitted that the WAMIT files brings either both asymptotic values (omg
+% = 0 rad/s and omg = Inf) or none of them.
 
 
 caseid = 'conjunto';
@@ -32,6 +34,7 @@ Nomg = length(omg); % Current number of elements of omg
 [omg_sorted, omg_idx] = sort(omg);
 Aij_sorted = Aij(:,:,omg_idx);
 Bij_sorted = Bij(:,:,omg_idx);
+omg = omg_sorted;
 
 % A treatment is now performed for ensuring that:
 % - the first values of added mass and radiation damping correspond to omg = 
@@ -58,32 +61,26 @@ d_omg = 0.01; % Incremental frequency (rad/s)
 
 % If there is no value assigned for omg = 0 rad/s in the  original data,
 % append omg = 0 rad/s as the first element.
-if omg_sorted(1) ~= 0
-    omg_zero = 0; % Flag for indicating that omg = 0 rad/s was not found in 
-                  % the original data
-    omg = [0 omg_sorted];  
+if omg_sorted(1) == 0
+    omg_asmp = 1; % Flag for indicating that the WAMIT file contains asymptotic 
+    % data (i.e., omg = 0 rad/s and omg = Inf)  
+    omg = [omg(1:Nomg-1) omg(Nomg-1)+d_omg 10]; % In this case, a new frequency
+    % is included before the asymptotic infinite one, being equal the penultimate 
+    % frequency incremented with d_omg. The last value (originally omg = Inf) is 
+    % replaced by omg = 10 rad/s.                        
 else
-    omg_zero = 1; % omg = 0 rad/s was found in the original data
+    omg_asmp = 0; % No asymptotic data in WAMIT file
+    omg = [0 omg omg(Nomg)+d_omg 10]; % In this case, omg = 0 rad/s is appended
+    % to the beginning of the frequency array. Also, the last frequency is
+    % incremented with d_omg and appended to the end of the array. Finally, omg
+    % = 10 rad/s is appended to the end of the array.
 end
 Nomg = length(omg); % Update Nomg
 
-% If the file 
+% Now the matrices with added mass and radiation damping coefficientes are
+% updated according to the new omg arrays
 
-
-% If the file brings data for infinite frequency (T = 0 s), it will be assigned 
-% as "Inf" in the array of frequencies. It should then be replaced by 10 rad/s
-% Therefore, the last element is replaced, the incremented frequency is
-% appended and finally 10 is appended.
-if omg_inf == 1
-    omg = [omg(1:Nomg-1) omg(Nomg-1)+d_omg 10];                                                 
-else
-% Otherwise, the last element of omg is incremented and appended to the 
-% array, and 10 is then appended at the end.
-    omg = [omg omg(Nomg)+d_omg 10];
-end
-    
-Nomg = length(omg); % Update Nomg
-
+% Declare new matrices for storing the values
 A11 = zeros(6,6,Nomg);
 A12 = zeros(6,6,Nomg);
 A21 = zeros(6,6,Nomg);
@@ -93,7 +90,10 @@ B12 = zeros(6,6,Nomg);
 B21 = zeros(6,6,Nomg);
 B22 = zeros(6,6,Nomg);
 
-if omg_zero == 0
+% 
+if omg_asmp == 0
+    % First elements (omg = 0 rad/s) for added masses are the same as the first
+    % in the original files. For radiation damping, they are forced to be zero.
     A11(:,:,1) = Aij_sorted(1:6,1:6,1);
     A12(:,:,1) = Aij_sorted(1:6,7:12,1);
     A21(:,:,1) = Aij_sorted(7:12,1:6,1);
@@ -102,6 +102,9 @@ if omg_zero == 0
     B12(:,:,1) = zeros(6,6,Nomg);
     B21(:,:,1) = zeros(6,6,Nomg);
     B22(:,:,1) = zeros(6,6,Nomg);
+    % The next elements from the original data are now appended to both the added
+    % mass and radiation damping matrices. Since the original omg array was
+    % increased in 3 elements, the range for the new A and B matrices is 2:Nomg-2.     
     A11(:,:,2:Nomg-2) = Aij_sorted(1:6,1:6,:);
     A12(:,:,2:Nomg-2) = Aij_sorted(1:6,7:12,:);
     A21(:,:,2:Nomg-2) = Aij_sorted(7:12,1:6,:);
@@ -110,37 +113,19 @@ if omg_zero == 0
     B12(:,:,2:Nomg-2) = Bij_sorted(1:6,7:12,:);
     B21(:,:,2:Nomg-2) = Bij_sorted(7:12,1:6,:);
     B22(:,:,2:Nomg-2) = Bij_sorted(7:12,7:12,:);
-    if omg_inf == 0
-        A11(:,:,Nomg-1) = Aij_sorted(1:6,1:6,Nomg-2);
-        A12(:,:,Nomg-1) = Aij_sorted(1:6,7:12,Nomg-2);
-        A21(:,:,Nomg-1) = Aij_sorted(7:12,1:6,Nomg-2);
-        A22(:,:,Nomg-1) = Aij_sorted(7:12,7:12,Nomg-2);    
-        B11(:,:,Nomg-1) = zeros(6,6,Nomg);
-        B12(:,:,Nomg-1) = zeros(6,6,Nomg);
-        B21(:,:,Nomg-1) = zeros(6,6,Nomg);
-        B22(:,:,Nomg-1) = zeros(6,6,Nomg);
-        A11(:,:,Nomg) = Aij_sorted(1:6,1:6,Nomg-2);
-        A12(:,:,Nomg) = Aij_sorted(1:6,7:12,Nomg-2);
-        A21(:,:,Nomg) = Aij_sorted(7:12,1:6,Nomg-2);
-        A22(:,:,Nomg) = Aij_sorted(7:12,7:12,Nomg-2);    
-        B11(:,:,Nomg) = zeros(6,6,Nomg);
-        B12(:,:,Nomg) = zeros(6,6,Nomg);
-        B21(:,:,Nomg) = zeros(6,6,Nomg);
-        B22(:,:,Nomg) = zeros(6,6,Nomg);
-    elseif omg_inf == 1
-        A11(:,:,Nomg-1) = Aij_sorted(1:6,1:6,Nomg-1);
-        A12(:,:,Nomg-1) = Aij_sorted(1:6,7:12,Nomg-1);
-        A21(:,:,Nomg-1) = Aij_sorted(7:12,1:6,Nomg-1);
-        A22(:,:,Nomg-1) = Aij_sorted(7:12,7:12,Nomg-1);  
-        B11(:,:,Nomg-1) = zeros(6,6,Nomg);
-        B12(:,:,Nomg-1) = zeros(6,6,Nomg);
-        B21(:,:,Nomg-1) = zeros(6,6,Nomg);
-        B22(:,:,Nomg-1) = zeros(6,6,Nomg);
-        A11(:,:,Nomg) = Aij_sorted(1:6,1:6,Nomg-2);
-        A12(:,:,Nomg) = Aij_sorted(1:6,7:12,Nomg-2);
-        A21(:,:,Nomg) = Aij_sorted(7:12,1:6,Nomg-2);
-        A22(:,:,Nomg) = Aij_sorted(7:12,7:12,Nomg-2); 
-    end
+    % For the added mass, the value corresponding to the incremented frequency
+    % equals the previous one (i.e., the last value in the original file). For
+    % the radiation damping, it is already assigned to zero.
+    A11(:,:,2:Nomg-1) = Aij_sorted(1:6,1:6,Nomg-3);
+    A12(:,:,2:Nomg-1) = Aij_sorted(1:6,7:12,Nomg-3);
+    A21(:,:,2:Nomg-1) = Aij_sorted(7:12,1:6,Nomg-3);
+    A22(:,:,2:Nomg-1) = Aij_sorted(7:12,7:12,Nomg-3);
+    B11(:,:,2:Nomg-2) = zeros(6,6,Nomg);
+    B12(:,:,2:Nomg-2) = zeros(6,6,Nomg);
+    B21(:,:,2:Nomg-2) = zeros(6,6,Nomg);
+    B22(:,:,2:Nomg-2) = zeros(6,6,Nomg);
+    % Finally
+ 
 else
 end
 
