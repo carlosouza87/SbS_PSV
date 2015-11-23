@@ -25,21 +25,21 @@ Nt=zeros(6);
 for k1 = 1:6
     for k2 = 1:6
         %B_freqs representa um vetor auxiliar com os
-        %valores do elemento B(k1,k2) em todas as frequências.
+        %valores do elemento B(k1,k2) em todas as frequï¿½ncias.
         for k3 = 1:N;
             B_freqs(k3) = B(k1,k2,k3);
             A_freqs(k3) = A(k1,k2,k3);
         end
         
-        %B_esp é o vetor de B linearmente espaçado, resultado da
-        %interpolação de w(k3), ou seja, todas as novas frequências.
+        %B_esp ï¿½ o vetor de B linearmente espaï¿½ado, resultado da
+        %interpolaï¿½ï¿½o de w(k3), ou seja, todas as novas frequï¿½ncias.
         for k3 = 1:N;
             B_esp(k1,k2,k3) = interp1(freqs, B_freqs,w(k3),'spline');
             A_esp(k1,k2,k3) = interp1(freqs, A_freqs,w(k3),'spline');
             
         end
         for k3 = 1:N; %tail of curve
-            B_esp(k1,k2,N+k3) = B_esp(k1,k2,N)/w_aux(k3)^3; % a cauda da curva será "completada" com o ultimo valor fornecido pelo WAMIT dividido por w^3, tal que esse w é a posição no eixo x.
+            B_esp(k1,k2,N+k3) = B_esp(k1,k2,N)/w_aux(k3)^3; % a cauda da curva serï¿½ "completada" com o ultimo valor fornecido pelo WAMIT dividido por w^3, tal que esse w ï¿½ a posiï¿½ï¿½o no eixo x.
         end
     end
 end
@@ -67,7 +67,7 @@ A=A_esp;
 % grid on
 
 
-%criação do vetor delta B, que representa a diferença de amortecimento
+%criaï¿½ï¿½o do vetor delta B, que representa a diferenï¿½a de amortecimento
 %entre duas frequencias consecutivas, para o instante inicial
 
 for k1 = 1:6
@@ -76,9 +76,9 @@ for k1 = 1:6
             if k3==1
                 dB(k1,k2,k3) = B(k1,k2,k3);
             else
-                %é importante guardar dessa forma,
+                %ï¿½ importante guardar dessa forma,
                 %pois posteriormente, para o calculo do (tempo limite) Tij deve-se saber o grau i e j (k1,k2)
-                %e também entre quais duas frequências é feita a diferença
+                %e tambï¿½m entre quais duas frequï¿½ncias ï¿½ feita a diferenï¿½a
                 dB(k1,k2,k3) = B(k1,k2,k3)-B(k1,k2,k3-1);
             end
             
@@ -86,7 +86,7 @@ for k1 = 1:6
     end
 end
 K=zeros(6,6,lt);
-%Cálculo do K(k1,k2,1) correspondente ao instante inicial
+%Cï¿½lculo do K(k1,k2,1) correspondente ao instante inicial
 for k1 = 1:6
     for k2 = 1:6
         K_aux=0;
@@ -104,15 +104,15 @@ for k1 = 1:6
         for k3 = 1:length(w);
             dB_soma(k1,k2) = dB_soma(k1,k2) + abs(dB(k1,k2,k3));
         end
-        e=0.010; %segundo papper de Journéé
+        e=0.010; %segundo papper de Journï¿½ï¿½
         Tij(k1,k2)=2*( dB_soma(k1,k2) /(pi*dw*e*K(k1,k2,1)) )^0.5;
         Tij(k1,k2)=fix(Tij(k1,k2));
     end
 end
-Tij=abs(Tij); %o que fazer quando Tij é complexo, causado por (Kij(k1,k2,0)<0)^0.5, resultado da soma dos B(k1,k2,k3)*dw que
-%às vezes possui termos negativos, quando um grau de liberdade 'joga' energia sobre o outro?
+Tij=abs(Tij); %o que fazer quando Tij ï¿½ complexo, causado por (Kij(k1,k2,0)<0)^0.5, resultado da soma dos B(k1,k2,k3)*dw que
+%ï¿½s vezes possui termos negativos, quando um grau de liberdade 'joga' energia sobre o outro?
 % Nt=abs(Nt);
-%Cálculo da função de retardo (retardation functions) até o instante Tij,sendo o time step igual a dt
+%Cï¿½lculo da funï¿½ï¿½o de retardo (retardation functions) atï¿½ o instante Tij,sendo o time step igual a dt
 
 % Nt_biggest = max(max(Nt));
 % aux = K;
@@ -123,9 +123,9 @@ Tij=abs(Tij); %o que fazer quando Tij é complexo, causado por (Kij(k1,k2,0)<0)^0
 for k1 = 1:6
     for k2 = 1:6
         
-        %K_aux representa a somatória de n=1 a Nw como está no Papper de Journéé
+        %K_aux representa a somatï¿½ria de n=1 a Nw como estï¿½ no Papper de Journï¿½ï¿½
         
-        for tau_calc= 2:lt %É necessário calcular para um grau (k1,k2) até o tempo total, exceto no instante inicial que já foi calculado.
+        for tau_calc= 2:lt %ï¿½ necessï¿½rio calcular para um grau (k1,k2) atï¿½ o tempo total, exceto no instante inicial que jï¿½ foi calculado.
             tau = tau_calc*dt;
             K_aux=0;
             for k3 = 1:length(w);
@@ -143,7 +143,7 @@ for k1 = 1:6
     end
 end
 
-%criação do vetor delta K, que representa a diferença da retardation
+%criaï¿½ï¿½o do vetor delta K, que representa a diferenï¿½a da retardation
 %function entre dois instantes de tempo consecutivos, para cada grau (k1,k2) de liberdade
 dK= zeros(6,6,size(K,3));
 

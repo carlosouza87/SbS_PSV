@@ -1,10 +1,10 @@
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%
 %%          Program for simulation of ship-to-ship operations         %%
-%%     Developed by naval engineering students of the Universidade de São Paulo     %%
+%%     Developed by naval engineering students of the Universidade de Sï¿½o Paulo     %%
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%
 %Julho-2014:
-% A mudança de wavesmd para zero não influencia no cálculo da integral de
-% convolução
+% A mudanï¿½a de wavesmd para zero nï¿½o influencia no cï¿½lculo da integral de
+% convoluï¿½ï¿½o
 
 clear variables global;close all;clc
 
@@ -29,14 +29,13 @@ r2d = 180/pi;   % constant to transform an angle in radians to degrees
 knt2ms = 0.5144444444444444; % constant to transform a velocity in knots to meters per second
 ms2knt = 1/knt2ms;          % constant to transform a velocity in meters per second to knots
 
-% imemory = iwaves1st;
 iwaves1st = 1;                % flag for 1st order wave loads
 iwavesmd = 1;                % flag for meand drift loads
 iwind = 0;                   % flag for wind loads
 icurr = 0;                   % flag for current loads
 icontrol_psv = 0;           % flag for the psv control system
 ihdsuction = 0;             % flag for hydrodynamci suction loads
-icoupling = 0;                %flag for coupled dynamics       %%%%%fazer comentario no relatório sobre o que é esse fator programado pelo Carlos Eduardo
+icoupling = 0;                %flag for coupled dynamics       %%%%%fazer comentario no relatï¿½rio sobre o que ï¿½ esse fator programado pelo Carlos Eduardo
 ivalida = 0;                   %flag to confirm validation of convolution evaluation
 imemory = 0;                 % flag for memory effects
 imooring = 0;                 % flag for mooring system
@@ -44,11 +43,11 @@ imooring = 0;                 % flag for mooring system
 %% Simulation data reading
 dimensions      % m-file with definition of ships dimensions fpr each loading case
 
-%esses dados serão usados depois no environment.data dentro do simdata
+%esses dados serï¿½o usados depois no environment.data dentro do simdata
 
 betaw = 195;    % wave incidence direction [deg]
 Hs = 2.5;       % significant wave height [m]
-Tp = 9;         % wave peak period [s] %na frequencia relacionada a esse Tp é onde A_fixfreq e B_fixfreq é avaliada
+Tp = 9;         % wave peak period [s] %na frequencia relacionada a esse Tp ï¿½ onde A_fixfreq e B_fixfreq ï¿½ avaliada
 gammaw = betaw;   % wind incidence direction [deg]
 Uw = 10;           % wind velocity [m/s]
 alphac = 180;      % current incidence direction [deg]
@@ -92,7 +91,7 @@ if iwavesmd == 1
         freqs = data.ship(k1).wavefreqs;
         [Fm1,Fm2,Fm6] = meandrift(Hs,Tp,spec,amp,pha,freqs); % meandrift(Hs,Tp,spec,amp,pha,freqs) -> [Fm1,Fm2,Fm6]-> data.ship(k1).Fmd (de 3 colunas)
         data.ship(k1).Fmd(:,1) = [Fm1;Fm1(1)]; %recebe o vetor todo e cria uma ultima linha com o Fm1(1)
-        data.ship(k1).Fmd(:,2) = [Fm2;Fm2(1)]; %quando olha-se a variavel pelo ´prompt de comando, chega-se em uma matriz com duas colunas: a 1 é para k1=1 e a 2 p/ k1=2.
+        data.ship(k1).Fmd(:,2) = [Fm2;Fm2(1)]; %quando olha-se a variavel pelo ï¿½prompt de comando, chega-se em uma matriz com duas colunas: a 1 ï¿½ para k1=1 e a 2 p/ k1=2.
         data.ship(k1).Fmd(:,3) = [Fm6;Fm6(1)];
     end
 end
@@ -121,7 +120,7 @@ if imemory == 1
         newdt=1;
         Tij_max = ones(12,1)*1000;
         
-        %opções de excitação para validação
+        %opï¿½ï¿½es de excitaï¿½ï¿½o para validaï¿½ï¿½o
         opcao=1;
         
         switch opcao
@@ -147,8 +146,8 @@ if imemory == 1
             [mu] = convolution_integral(K_teste,Tij_max,ktime,nu,t,newdt);
         end
         
-        %curva de comparação
-        % curva para comparação
+        %curva de comparaï¿½ï¿½o
+        % curva para comparaï¿½ï¿½o
         t1=(1:lt)*dt;
         num = [1];
         den = [1 .2 1];
@@ -156,7 +155,7 @@ if imemory == 1
         figure(35)
         i=1;
         plot(variable.t_plot(1:ktime,1),variable.mu(i,1:ktime)','r',variable.t_plot(1:ktime,1),a,'b')
-        title('mu (em vermelho) e lsim (em azul), em função do tempo')
+        title('mu (em vermelho) e lsim (em azul), em funï¿½ï¿½o do tempo')
         grid on
         %%%%%%
         return
@@ -221,7 +220,7 @@ variable.u1p = 0;
 % simulation routine
 
 while t <= tfinal
-    [t,y(:,ktime+1),nn] = hrkdif(y(:,ktime),dt,t,nn);  %%utilização do hrkdif em que entra o eqsim
+    [t,y(:,ktime+1),nn] = hrkdif(y(:,ktime),dt,t,nn);  %%utilizaï¿½ï¿½o do hrkdif em que entra o eqsim
     ktime = ktime + 1;
     variable.ship(1).eta(:,ktime) = y(1:6,ktime);
     variable.ship(2).eta(:,ktime) = y(7:12,ktime);
@@ -236,16 +235,16 @@ save tf_graf_d2
 % resultados_tf;
 figure(1)
 plot(tsim,variable.ship(2).waves1st(1,:)/1000)
-title('Força de 1a ordem (PSV) - surge')
+title('Forï¿½a de 1a ordem (PSV) - surge')
 xlabel('Tempo (s)')
-ylabel('Força (kN)')
+ylabel('Forï¿½a (kN)')
 grid on
 
 figure(2)
 plot(tsim,variable.ship(2).waves1st(2,:)/1000)
-title('Força de 1a ordem (PSV) - sway')
+title('Forï¿½a de 1a ordem (PSV) - sway')
 xlabel('Tempo (s)')
-ylabel('Força (kN)')
+ylabel('Forï¿½a (kN)')
 grid on
 
 figure(3)
@@ -257,16 +256,16 @@ grid on
 
 figure(4)
 plot(tsim,variable.ship(2).tau_wavesmd(1,:)/1000)
-title('Força de 2a ordem (PSV) - surge')
+title('Forï¿½a de 2a ordem (PSV) - surge')
 xlabel('Tempo (s)')
-ylabel('Força (kN)')
+ylabel('Forï¿½a (kN)')
 grid on
 
 figure(5)
 plot(tsim,variable.ship(2).tau_wavesmd(2,:)/1000)
-title('Força de 2a ordem (PSV) - sway')
+title('Forï¿½a de 2a ordem (PSV) - sway')
 xlabel('Tempo (s)')
-ylabel('Força (kN)')
+ylabel('Forï¿½a (kN)')
 grid on
 
 figure(6)

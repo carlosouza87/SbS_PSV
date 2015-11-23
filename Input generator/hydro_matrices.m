@@ -1,6 +1,6 @@
 clear all;close all;clc
 
-% It is admitted that the WAMIT files brings either both asymptotic values (omg
+% It is admitted that the WAMIT files bring either both asymptotic values (omg
 % = 0 rad/s and omg = Inf) or none of them.
 
 
@@ -28,13 +28,49 @@ for p = 1:Nperiods
 end
 
 omg = (2*pi./unique_periods)'; % "omega" array, for frequency in rad/s
-Nomg = length(omg); % Current number of elements of omg
+Nomg = length(omg); % Length of omg
 
 % Sort with respect to frequency in increasing order
 [omg_sorted, omg_idx] = sort(omg);
 Aij_sorted = Aij(:,:,omg_idx);
 Bij_sorted = Bij(:,:,omg_idx);
 omg = omg_sorted;
+
+% Check if the WAMIT file contains asymptotic data (i.e., coefficients for omg
+% = 0 rad/s and omg = Inf).
+if omg(1) == 0
+    omg_asmp = 1; % Flag for indicating the presence of asymptotic data                  
+else
+    omg_asmp = 0; % No asymptotic data
+end
+
+% If the users choses the LF + WF superposition approach, no memory effects are
+% considered and therefore there is no need for calculating the retardation
+% functions. The radiation loads considered in the equations of motions are only
+% those for omg = 0 rad/s, which may either be already provided by WAMIT or 
+% extrapolated from the available data.
+if imemory == 0 
+    if omg_asmp == 1
+    A11 = zeros(6,6,1);
+    A12 = zeros(6,6,1);
+    A21 = zeros(6,6,1);
+    A22 = zeros(6,6,1);
+    for k1 = 1:6
+        for k2 = 1:6
+            A11(k1,k2) = interp1(omg,Aij_sorted(k1,k2,:),0,'spline','extrap');
+            A12(k1,k2) = interp1(omg,Aij_sorted(k1,k2+6,:),0,'spline','extrap');
+            A21(k1,k2) = interp1(omg,Aij_sorted(k1+6,k2,:),0,'spline','extrap');
+            A22(k1,k2) = interp1(omg,Aij_sorted(k1+6,k2+6,:),0,'spline','extrap');
+        end
+    end
+else
+end
+    
+
+
+
+
+
 
 % A treatment is now performed for ensuring that:
 % - the first values of added mass and radiation damping correspond to omg = 
