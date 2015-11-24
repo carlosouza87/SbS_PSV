@@ -67,8 +67,8 @@ A=A_esp;
 % grid on
 
 
-%criaï¿½ï¿½o do vetor delta B, que representa a diferenï¿½a de amortecimento
-%entre duas frequencias consecutivas, para o instante inicial
+% Criação do vetor delta B, que representa a difereça de amortecimento
+% entre duas frequências consecutivas, para o instante inicial
 
 for k1 = 1:6
     for k2 = 1:6
@@ -104,7 +104,7 @@ for k1 = 1:6
         for k3 = 1:length(w);
             dB_soma(k1,k2) = dB_soma(k1,k2) + abs(dB(k1,k2,k3));
         end
-        e=0.010; %segundo papper de Journï¿½ï¿½
+        e=0.010; %segundo paper de Journee
         Tij(k1,k2)=2*( dB_soma(k1,k2) /(pi*dw*e*K(k1,k2,1)) )^0.5;
         Tij(k1,k2)=fix(Tij(k1,k2));
     end

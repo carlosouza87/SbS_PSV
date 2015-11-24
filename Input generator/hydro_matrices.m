@@ -3,7 +3,6 @@ clear all;close all;clc
 % It is admitted that the WAMIT files bring either both asymptotic values (omg
 % = 0 rad/s and omg = Inf) or none of them.
 
-
 caseid = 'conjunto';
 inpt1 = [caseid '.1']; % Input file
 imemory = 1;
@@ -14,7 +13,7 @@ imemory = 1;
 Nperiods = length(periods); % Number of periods, considering repeated
 unique_periods = unique(periods); % Array of non-repeating periods
 
-% Prepare matrices for Scaling of added mass and damping matrices (WAMIT
+% Prepare matrices for scaling of added mass and damping matrices (WAMIT
 % v 6.2 manual, p. 4-3)
 % Aij = Aij' * rho * ULEN^k
 % Bij = Bij' * rho * w * ULEN^k
@@ -79,13 +78,13 @@ if imemory == 0
         A21 = Aij_sorted(7:12,1:6,1);
         A22 = Aij_sorted(7:12,7:12,1);
     end
-    
-    
+     
     % Scale Wamit data to SI system (Wamit axes)
     A11_dim = A11*rho .* (ULEN .^ scaleA);
     A12_dim = A12*rho .* (ULEN .^ scaleA);
     A21_dim = A21*rho .* (ULEN .^ scaleA);
     A22_dim = A22*rho .* (ULEN .^ scaleA);
+    
     % Transform to Fossen axes
     A11 = Tscale*A11_dim*Tscale;
     A12 = Tscale*A12_dim*Tscale;
@@ -109,6 +108,8 @@ elseif imemory == 1
     omg_e = linspace(omg(1),10,200); % Equaly spaced frequency, ranging from 0
     % rad/s to 10 rad/s (considered as the infinite frequency), with 200 values.
     
+    delta_omg_e = omg_e(2) - omg_e(1); % Length of omg_e increment
+    
     B11 = zeros(6,6,200); % Matrix of radiation damping for ship 1
     B12 = zeros(6,6,200); % Matrix of radiation damping for the effects of ship 1 motions over ship 2
     B21 = zeros(6,6,200); % Matrix of radiation damping for the effects of ship 2 motions over ship 1
@@ -130,8 +131,8 @@ elseif imemory == 1
     
     for k1 = 1:6
         for k2 = 1:6
-            % Interpolate the radiation damping over the equaly spaced frequency
-            % array (until the index idx_M found above).
+            % Interpolate the radiation damping over the equaly spaced 
+            % frequency array (until the index idx_M found above).
             for k3 = 1:idx_M
                 b_aux = reshape(Bij_sorted(k1,k2,:),[1 Nomg]);
                 B11(k1,k2,k3) = interp1(omg,b_aux,omg_e(k3),'spline','extrap');
@@ -148,41 +149,85 @@ elseif imemory == 1
             % where B_max is the damping for the highest frequency provided.
             for k3 = idx_M+1:200
                 B11(k1,k2,k3) = B11(k1,k2,idx_M)/omg_e(k3)^3;
-                B11(k1,k2,k3) = B12(k1,k2,idx_M)/omg_e(k3)^3;
-                B11(k1,k2,k3) = B21(k1,k2,idx_M)/omg_e(k3)^3;
-                B11(k1,k2,k3) = B22(k1,k2,idx_M)/omg_e(k3)^3;
+                B12(k1,k2,k3) = B12(k1,k2,idx_M)/omg_e(k3)^3;
+                B21(k1,k2,k3) = B21(k1,k2,idx_M)/omg_e(k3)^3;
+                B22(k1,k2,k3) = B22(k1,k2,idx_M)/omg_e(k3)^3;
             end
         end
     end
+    
+    % Scaling of B11, B12, B21 and B22 - adapted from (MSS, 2010)
+    for k3 = 1:200        
+        B11_dim = B11(:,:,k3)*rho .* omg_e(k3).* (ULEN .^ scaleA);
+        B12_dim = B12(:,:,k3)*rho .* omg_e(k3).* (ULEN .^ scaleA);
+        B21_dim = B21(:,:,k3)*rho .* omg_e(k3).* (ULEN .^ scaleA);
+        B22_dim = B22(:,:,k3)*rho .* omg_e(k3).* (ULEN .^ scaleA);
+        B11(:,:,k3) = Tscale*B11_dim*Tscale;
+        B12(:,:,k3) = Tscale*B12_dim*Tscale;
+        B21(:,:,k3) = Tscale*B21_dim*Tscale;
+        B22(:,:,k3) = Tscale*B22_dim*Tscale;
+    end   
+    
+    % Creation of matrices with "delta B's", that is, the difference
+    % between radiation damping values for subsequent frequencies.
+    delta_B11 = B11(:,:,2:200) - B11(:,:,1:199);
+    delta_B12 = B12(:,:,2:200) - B12(:,:,1:199);
+    delta_B21 = B21(:,:,2:200) - B21(:,:,1:199);
+    delta_B22 = B22(:,:,2:200) - B22(:,:,1:199);
+    
+    % Initialization of matrices for storage of the retardation functions,
+    % K11, K12, K21 and K22
+    K11 = zeros(6,6,199);
+    K12 = zeros(6,6,199);
+    K21 = zeros(6,6,199);
+    K22 = zeros(6,6,199);
+    
+    % Calculation of the retardation functions for tau = 0 (where tau is
+    % the delay).
+    for k1 = 1:6
+        for k2 = 1:6
+            b11_aux = reshape(B11(k1,k2,:),[1 200]);
+            K11(k1,k2) = 2/pi*trapz(b11_aux)*delta_omg_e;
+            b12_aux = reshape(B12(k1,k2,:),[1 200]);
+            K12(k1,k2) = 2/pi*trapz(b12_aux)*delta_omg_e;
+            b21_aux = reshape(B21(k1,k2,:),[1 200]);
+            K21(k1,k2) = 2/pi*trapz(b21_aux)*delta_omg_e;
+            b22_aux = reshape(B22(k1,k2,:),[1 200]);
+            K22(k1,k2) = 2/pi*trapz(b22_aux)*delta_omg_e;
+        end
+    end
+    
+    % Calculation of the limit values for the integrations (Journee, 1993)
+    eps = 0.01; % Factor proposed in the mentioned reference
+    
+    G11 = zeros(6,6);
+    G12 = zeros(6,6);
+    G21 = zeros(6,6);
+    G22 = zeros(6,6);
+    for k1 = 1:6
+        for k2 = 1:6
+            G11(k1,k2) = 2*sqrt((sum(abs(delta_B11(k1,k2,:))))/(pi*delta_omg_e*eps*K11(k1,k2,1)));
+            G12(k1,k2) = 2*sqrt((sum(abs(delta_B12(k1,k2,:))))/(pi*delta_omg_e*eps*K12(k1,k2,1)));
+            G21(k1,k2) = 2*sqrt((sum(abs(delta_B21(k1,k2,:))))/(pi*delta_omg_e*eps*K21(k1,k2,1)));
+            G22(k1,k2) = 2*sqrt((sum(abs(delta_B22(k1,k2,:))))/(pi*delta_omg_e*eps*K22(k1,k2,1)));
+        end
+    end
+    
+
+
+    
+%     for k1 = 1:6
+%         for k2 = 1:6
+%             for k3 = 1:199
+%                 K11(k1,k2,k3) = K11(k1,k2,k3) + 
+%             end
+%         end
+%     end
+    
+    
 end
 
 
-
-%
-% for w = 1:Nfreqs,
-%     % scale Wamit data to SI system (Wamit axes)
-%     A11_dim = A11(:,:,w)*rho .* (ULEN .^ scaleA);
-%     A12_dim = A12(:,:,w)*rho .* (ULEN .^ scaleA);
-%     A21_dim = A21(:,:,w)*rho .* (ULEN .^ scaleA);
-%     A22_dim = A22(:,:,w)*rho .* (ULEN .^ scaleA);
-%     B11_dim = B11(:,:,w)*rho .* freqs(w) ...
-%         .* (ULEN .^ scaleA);
-%     B12_dim = B12(:,:,w)*rho .* freqs(w) ...
-%         .* (ULEN .^ scaleA);
-%     B21_dim = B21(:,:,w)*rho .* freqs(w) ...
-%         .* (ULEN .^ scaleA);
-%     B22_dim = B22(:,:,w)*rho .* freqs(w) ...
-%         .* (ULEN .^ scaleA);
-%     % transform to Fossen axes
-%     A11(:,:,w) = Tscale*A11_dim*Tscale;
-%     A12(:,:,w) = Tscale*A12_dim*Tscale;
-%     A21(:,:,w) = Tscale*A21_dim*Tscale;
-%     A22(:,:,w) = Tscale*A22_dim*Tscale;
-%     B11(:,:,w) = Tscale*B11_dim*Tscale;
-%     B12(:,:,w) = Tscale*B12_dim*Tscale;
-%     B21(:,:,w) = Tscale*B21_dim*Tscale;
-%     B22(:,:,w) = Tscale*B22_dim*Tscale;
-% end
 
 
 
@@ -193,7 +238,10 @@ end
 
 % clear all
 
-% Reference
+% References
 % Journee, J. M. J. (1993) - Hydromechanics coefficients for calculating time
 % domain motions of cutter suction dredges by Cummins equations. Report 968, Delft
 % University of Technology, Ship Hydromechanics Laboratory. The Netherlands.
+%
+% MSS (2010) - Marine Systems Simulator. Viewed 24/11/2015
+% http://www.marinecontrol.org.
