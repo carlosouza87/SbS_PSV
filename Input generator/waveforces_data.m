@@ -1,10 +1,17 @@
-%% 1st order
-%FTFfile = ['FORCE_' file_waveforces_data '.4'];
-FTFfile = ['conjunto.3'];
-[periods,incid,dof,amp,pha,Re,Im] = textread(FTFfile);
+% 1st order
+if isimtype == 1
+    w1st_file = [caseid '.3'];
+    scl_factor = rho*g; % Scaling factor    
+elseif isimtype == 2
+    w1st_file = [caseid '.4'];
+    scl_factor = 1; % Scaling factor 
+else
+    error('Invalid value for isimtype!')
+end
 
-rho = 1025;
-g = 9.8;
+%% FALTA DAQUI PRA BAIXO!!!
+
+[periods,incid,dof,amp,pha,Re,Im] = textread(w1st_file);
 
 periods = unique(periods);
 incid = unique(incid);
@@ -31,9 +38,9 @@ end
 
 
 
-clear periods dof amp pha Re Im 
-%% 2nd order
-%driftfile  = [file_waveforces_data '.9'];
+
+clear periods dof amp pha Re Im
+% 2nd order
 driftfile  = ['conjunto.9'];
 
 [periods,incid1,incid2,dof,amp,pha,Re,Im] = textread(driftfile);

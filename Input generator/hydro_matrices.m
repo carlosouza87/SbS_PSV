@@ -3,7 +3,7 @@ clear all;close all;clc
 % It is admitted that the WAMIT files bring either both asymptotic values (omg
 % = 0 rad/s and omg = Inf) or none of them.
 
-caseid = 'conjunto';
+% caseid = 'conjunto';
 dt = 0.1; % Time step [s]
 inpt1 = [caseid '.1']; % Input file
 imemory = 1;
@@ -24,9 +24,9 @@ rho = 1025; % Water density [kg/m^3]
 ULEN = 1; % WAMIT scaling factor []
 
 T_gdf = [1 -1 -1];
-Tscale = diag([T_gdf T_gdf]); % Auxiliary matrix for transforming data into Fossen axes
+Tscale = diag([T_gdf T_gdf]); % Matrix for transforming data into Fossen axes
 scaleA  = [ ones(3)*3 ones(3)*4
-    ones(3)*4 ones(3)*5 ];
+    ones(3)*4 ones(3)*5 ]; % Matrix for scaling WAMIT data
 
 % Extract added mass and damping
 for p = 1:Nperiods
@@ -79,20 +79,20 @@ if imemory == 0
         A21 = Aij_sorted(7:12,1:6,1);
         A22 = Aij_sorted(7:12,7:12,1);
     end
-     
+    
     % Scale Wamit data to SI system (Wamit axes)
     A11 = A11*rho .* (ULEN .^ scaleA);
     A12 = A12*rho .* (ULEN .^ scaleA);
     A21 = A21*rho .* (ULEN .^ scaleA);
     A22 = A22*rho .* (ULEN .^ scaleA);
     
-%    % Transform to Fossen axes
-%    A11 = Tscale*A11*Tscale;
-%    A12 = Tscale*A12*Tscale;
-%    A21 = Tscale*A21*Tscale;
-%    A22 = Tscale*A22*Tscale;
+    %    % Transform to Fossen axes
+    %    A11 = Tscale*A11*Tscale;
+    %    A12 = Tscale*A12*Tscale;
+    %    A21 = Tscale*A21*Tscale;
+    %    A22 = Tscale*A22*Tscale;
     
- elseif imemory == 1
+elseif imemory == 1
     % If LF and WF loads are to be considered together in the equations of
     % motions, a unified model for maneuvering and seakeeping must be adopted
     % and therefore the radiation loads shall be represented through the convolution
@@ -132,7 +132,7 @@ if imemory == 0
     
     for k1 = 1:6
         for k2 = 1:6
-            % Interpolate the radiation damping over the equaly spaced 
+            % Interpolate the radiation damping over the equaly spaced
             % frequency array (until the index idx_M found above).
             for k3 = 1:idx_M
                 b_aux = reshape(Bij_sorted(k1,k2,:),[1 Nomg]);
@@ -158,7 +158,7 @@ if imemory == 0
     end
     
     % Scaling of B11, B12, B21 and B22 - adapted from (MSS, 2010)
-    for k3 = 1:200        
+    for k3 = 1:200
         B11_dim = B11(:,:,k3)*rho .* omg_e(k3).* (ULEN .^ scaleA);
         B12_dim = B12(:,:,k3)*rho .* omg_e(k3).* (ULEN .^ scaleA);
         B21_dim = B21(:,:,k3)*rho .* omg_e(k3).* (ULEN .^ scaleA);
@@ -168,11 +168,11 @@ if imemory == 0
         B12(:,:,k3) = B12_dim;
         B21(:,:,k3) = B21_dim;
         B22(:,:,k3) = B22_dim;
-%        B11(:,:,k3) = Tscale*B11*Tscale;
-%        B12(:,:,k3) = Tscale*B12*Tscale;
-%        B21(:,:,k3) = Tscale*B21*Tscale;
-%        B22(:,:,k3) = Tscale*B22*Tscale;
-    end   
+        %        B11(:,:,k3) = Tscale*B11*Tscale;
+        %        B12(:,:,k3) = Tscale*B12*Tscale;
+        %        B21(:,:,k3) = Tscale*B21*Tscale;
+        %        B22(:,:,k3) = Tscale*B22*Tscale;
+    end
     
     % Creation of matrices with "delta B's", that is, the difference
     % between radiation damping values for subsequent frequencies.
@@ -203,82 +203,82 @@ if imemory == 0
         end
     end
     
-%    % Calculation of the limit values for the integrations (Journee, 1993)
-%    eps = 0.01; % Factor proposed in the mentioned reference
-%    
-%    T11 = zeros(6,6);
-%    T12 = zeros(6,6);
-%    T21 = zeros(6,6);
-%    T22 = zeros(6,6);
-%    for k1 = 1:6
-%        for k2 = 1:6
-%            T11(k1,k2) = 2*sqrt((sum(abs(delta_B11(k1,k2,:))))/(pi*delta_omg_e*eps*K11_0(k1,k2,1)));
-%            T12(k1,k2) = 2*sqrt((sum(abs(delta_B12(k1,k2,:))))/(pi*delta_omg_e*eps*K12_0(k1,k2,1)));
-%            T21(k1,k2) = 2*sqrt((sum(abs(delta_B21(k1,k2,:))))/(pi*delta_omg_e*eps*K21_0(k1,k2,1)));
-%            T22(k1,k2) = 2*sqrt((sum(abs(delta_B22(k1,k2,:))))/(pi*delta_omg_e*eps*K22_0(k1,k2,1)));
-%        end
-%    end
+    %    % Calculation of the limit values for the integrations (Journee, 1993)
+    %    eps = 0.01; % Factor proposed in the mentioned reference
+    %
+    %    T11 = zeros(6,6);
+    %    T12 = zeros(6,6);
+    %    T21 = zeros(6,6);
+    %    T22 = zeros(6,6);
+    %    for k1 = 1:6
+    %        for k2 = 1:6
+    %            T11(k1,k2) = 2*sqrt((sum(abs(delta_B11(k1,k2,:))))/(pi*delta_omg_e*eps*K11_0(k1,k2,1)));
+    %            T12(k1,k2) = 2*sqrt((sum(abs(delta_B12(k1,k2,:))))/(pi*delta_omg_e*eps*K12_0(k1,k2,1)));
+    %            T21(k1,k2) = 2*sqrt((sum(abs(delta_B21(k1,k2,:))))/(pi*delta_omg_e*eps*K21_0(k1,k2,1)));
+    %            T22(k1,k2) = 2*sqrt((sum(abs(delta_B22(k1,k2,:))))/(pi*delta_omg_e*eps*K22_0(k1,k2,1)));
+    %        end
+    %    end
     % Fix all limit values to 120 s
     T11 = ones(6,6)*120;
     T12 = ones(6,6)*120;
     T21 = ones(6,6)*120;
     T22 = ones(6,6)*120;
-     
-    % Calculation of retardation functions for tau > 0 s (Journee, 1993, sec. 4.4)    
+    
+    % Calculation of retardation functions for tau > 0 s (Journee, 1993, sec. 4.4)
     for k1 = 1:6
-         for k2 = 1:6
-             tau11 = dt:dt:T11(k1,k2);  
-             K11(k1,k2).tau = [0 tau11];
-             K_aux = zeros(1,length(tau11));             
-             for k4 = 1:199
-                 K_aux = K_aux + (2*pi./tau11.^2).*(delta_B11(k1,k2,k4)/delta_omg_e*(cos(omg_e(k4+1)*tau11)-cos(omg_e(k4)*tau11)));                     
-             end
-             m1 = (2*pi./tau11);
-             m2 = B11(k1,k2,200)*sin(omg_e(200)*tau11);
-             K_aux = K_aux + m1.*m2;              
-             K11(k1,k2).K = [K11_0(k1,k2) K_aux];  
-             K11(k1,k2).T = T11(k1,k2);      
-       
-             tau12 = dt:dt:T12(k1,k2);  
-             K12(k1,k2).tau = [0 tau12];
-             K_aux = zeros(1,length(tau12));             
-             for k4 = 1:199
-                 K_aux = K_aux + (2*pi./tau12.^2).*(delta_B12(k1,k2,k4)/delta_omg_e*(cos(omg_e(k4+1)*tau12)-cos(omg_e(k4)*tau12)));                     
-             end
-             m1 = (2*pi./tau12);
-             m2 = B12(k1,k2,200)*sin(omg_e(200)*tau12);
-             K_aux = K_aux + m1.*m2;              
-             K12(k1,k2).K = [K12_0(k1,k2) K_aux]; 
-             K12(k1,k2).T = T12(k1,k2);
-             
-             tau21 = dt:dt:T21(k1,k2);  
-             K21(k1,k2).tau = [0 tau21];
-             K_aux = zeros(1,length(tau21));             
-             for k4 = 1:199
-                 K_aux = K_aux + (2*pi./tau21.^2).*(delta_B21(k1,k2,k4)/delta_omg_e*(cos(omg_e(k4+1)*tau21)-cos(omg_e(k4)*tau21)));                     
-             end
-             m1 = (2*pi./tau21);
-             m2 = B21(k1,k2,200)*sin(omg_e(200)*tau21);
-             K_aux = K_aux + m1.*m2;              
-             K21(k1,k2).K = [K21_0(k1,k2) K_aux]; 
-             K21(k1,k2).T = T21(k1,k2);
-             
-             tau22 = dt:dt:T22(k1,k2);  
-             K22(k1,k2).tau = [0 tau22];
-             K_aux = zeros(1,length(tau22));             
-             for k4 = 1:199
-                 K_aux = K_aux + (2*pi./tau22.^2).*(delta_B22(k1,k2,k4)/delta_omg_e*(cos(omg_e(k4+1)*tau22)-cos(omg_e(k4)*tau22)));                     
-             end
-             m1 = (2*pi./tau22);
-             m2 = B22(k1,k2,200)*sin(omg_e(200)*tau22);
-             K_aux = K_aux + m1.*m2;              
-             K22(k1,k2).K = [K22_0(k1,k2) K_aux];  
-             K22(k1,k2).T = T22(k1,k2); 
-         end
-     end   
-     
-     % Calculation of infinite added mass matrices, if not provided by WAMIT
-     if omg_asmp == 0
+        for k2 = 1:6
+            tau11 = dt:dt:T11(k1,k2);
+            K11(k1,k2).tau = [0 tau11];
+            K_aux = zeros(1,length(tau11));
+            for k4 = 1:199
+                K_aux = K_aux + (2*pi./tau11.^2).*(delta_B11(k1,k2,k4)/delta_omg_e*(cos(omg_e(k4+1)*tau11)-cos(omg_e(k4)*tau11)));
+            end
+            m1 = (2*pi./tau11);
+            m2 = B11(k1,k2,200)*sin(omg_e(200)*tau11);
+            K_aux = K_aux + m1.*m2;
+            K11(k1,k2).K = [K11_0(k1,k2) K_aux];
+            K11(k1,k2).T = T11(k1,k2);
+            
+            tau12 = dt:dt:T12(k1,k2);
+            K12(k1,k2).tau = [0 tau12];
+            K_aux = zeros(1,length(tau12));
+            for k4 = 1:199
+                K_aux = K_aux + (2*pi./tau12.^2).*(delta_B12(k1,k2,k4)/delta_omg_e*(cos(omg_e(k4+1)*tau12)-cos(omg_e(k4)*tau12)));
+            end
+            m1 = (2*pi./tau12);
+            m2 = B12(k1,k2,200)*sin(omg_e(200)*tau12);
+            K_aux = K_aux + m1.*m2;
+            K12(k1,k2).K = [K12_0(k1,k2) K_aux];
+            K12(k1,k2).T = T12(k1,k2);
+            
+            tau21 = dt:dt:T21(k1,k2);
+            K21(k1,k2).tau = [0 tau21];
+            K_aux = zeros(1,length(tau21));
+            for k4 = 1:199
+                K_aux = K_aux + (2*pi./tau21.^2).*(delta_B21(k1,k2,k4)/delta_omg_e*(cos(omg_e(k4+1)*tau21)-cos(omg_e(k4)*tau21)));
+            end
+            m1 = (2*pi./tau21);
+            m2 = B21(k1,k2,200)*sin(omg_e(200)*tau21);
+            K_aux = K_aux + m1.*m2;
+            K21(k1,k2).K = [K21_0(k1,k2) K_aux];
+            K21(k1,k2).T = T21(k1,k2);
+            
+            tau22 = dt:dt:T22(k1,k2);
+            K22(k1,k2).tau = [0 tau22];
+            K_aux = zeros(1,length(tau22));
+            for k4 = 1:199
+                K_aux = K_aux + (2*pi./tau22.^2).*(delta_B22(k1,k2,k4)/delta_omg_e*(cos(omg_e(k4+1)*tau22)-cos(omg_e(k4)*tau22)));
+            end
+            m1 = (2*pi./tau22);
+            m2 = B22(k1,k2,200)*sin(omg_e(200)*tau22);
+            K_aux = K_aux + m1.*m2;
+            K22(k1,k2).K = [K22_0(k1,k2) K_aux];
+            K22(k1,k2).T = T22(k1,k2);
+        end
+    end
+    
+    % Calculation of infinite added mass matrices, if not provided by WAMIT
+    if omg_asmp == 0
         % Coefficients for the first frequency provided in the WAMIT file
         % will be used for the calculation.
         omg_fix = omg(10);
@@ -291,12 +291,12 @@ if imemory == 0
         A12 = A12*rho .* (ULEN .^ scaleA);
         A21 = A21*rho .* (ULEN .^ scaleA);
         A22 = A22*rho .* (ULEN .^ scaleA);
-    
-%        % Transform to Fossen axes
-%        A11 = Tscale*A11*Tscale;
-%        A12 = Tscale*A12*Tscale;
-%        A21 = Tscale*A21*Tscale;
-%        A22 = Tscale*A22*Tscale;
+        
+        %        % Transform to Fossen axes
+        %        A11 = Tscale*A11*Tscale;
+        %        A12 = Tscale*A12*Tscale;
+        %        A21 = Tscale*A21*Tscale;
+        %        A22 = Tscale*A22*Tscale;
         
         A11_inf = zeros(6,6);
         A12_inf = zeros(6,6);
@@ -305,74 +305,62 @@ if imemory == 0
         
         OMG = omg_e(200);
         for k1 = 1:6
-             for k2 = 1:6
-                 tau11 = K11(k1,k2).tau;
-                 k11 = K11(k1,k2).K; % Lower case k11 for not overwriting K11
-                 lk = length(k11);
-                 Int11 = 0;
-                 for k3 = 2:200
-                     dK = k11(k3) - k11(k3-1);                     
-                     Int11 = Int11 + 1/OMG^2*dK/dt*(sin(OMG*k3*dt)-sin(OMG*(k3-1)*dt));
-                 end
-                 Int11 = Int11 + 1/OMG*(k11(1)-k11(lk)*cos(OMG*200*dt));
-                 A11_inf(k1,k2) = A11(k1,k2) + 1/omg_fix*Int11;
- 
-                 
-                 tau12 = K12(k1,k2).tau;
-                 k12 = K12(k1,k2).K; % Lower case k12 for not overwriting K12
-                 lk = length(k12);
-                 Int12 = 0;
-                 for k3 = 2:200
-                     dK = k12(k3) - k12(k3-1);                     
-                     Int12 = Int12 + 1/OMG^2*dK/dt*(sin(OMG*k3*dt)-sin(OMG*(k3-1)*dt));
-                 end
-                 Int12 = Int12 + 1/OMG*(k12(1)-k12(lk)*cos(OMG*200*dt));
-                 A12_inf(k1,k2) = A12(k1,k2) + 1/omg_fix*Int12;
-      
-                 
-                 tau21 = K21(k1,k2).tau;
-                 k21 = K21(k1,k2).K; % Lower case k21 for not overwriting K21
-                 lk = length(k21);
-                 Int21 = 0;
-                 for k3 = 2:200
-                     dK = k21(k3) - k21(k3-1);                     
-                     Int21 = Int21 + 1/OMG^2*dK/dt*(sin(OMG*k3*dt)-sin(OMG*(k3-1)*dt));
-                 end
-                 Int21 = Int21 + 1/OMG*(k21(1)-k21(lk)*cos(OMG*200*dt));
-                 A21_inf(k1,k2) = A21(k1,k2) + 1/omg_fix*Int21;
-
-                 
-                 tau22 = K22(k1,k2).tau;
-                 k22 = K22(k1,k2).K; % Lower case k22 for not overwriting K22
-                 lk = length(k22);
-                 Int22 = 0;
-                 for k3 = 2:200
-                     dK = k22(k3) - k22(k3-1);                     
-                     Int22 = Int22 + 1/OMG^2*dK/dt*(sin(OMG*k3*dt)-sin(OMG*(k3-1)*dt));
-                 end
-                 Int22 = Int22 + 1/OMG*(k22(1)-k22(lk)*cos(OMG*200*dt));
-                 A22_inf(k1,k2) = A22(k1,k2) + 1/omg_fix*Int22;
-               
-             end
-         end    
-
-     end
- 
+            for k2 = 1:6
+                tau11 = K11(k1,k2).tau;
+                k11 = K11(k1,k2).K; % Lower case k11 for not overwriting K11
+                lk = length(k11);
+                Int11 = 0;
+                for k3 = 2:200
+                    dK = k11(k3) - k11(k3-1);
+                    Int11 = Int11 + 1/OMG^2*dK/dt*(sin(OMG*k3*dt)-sin(OMG*(k3-1)*dt));
+                end
+                Int11 = Int11 + 1/OMG*(k11(1)-k11(lk)*cos(OMG*200*dt));
+                A11_inf(k1,k2) = A11(k1,k2) + 1/omg_fix*Int11;                
+                
+                tau12 = K12(k1,k2).tau;
+                k12 = K12(k1,k2).K; % Lower case k12 for not overwriting K12
+                lk = length(k12);
+                Int12 = 0;
+                for k3 = 2:200
+                    dK = k12(k3) - k12(k3-1);
+                    Int12 = Int12 + 1/OMG^2*dK/dt*(sin(OMG*k3*dt)-sin(OMG*(k3-1)*dt));
+                end
+                Int12 = Int12 + 1/OMG*(k12(1)-k12(lk)*cos(OMG*200*dt));
+                A12_inf(k1,k2) = A12(k1,k2) + 1/omg_fix*Int12;                
+                
+                tau21 = K21(k1,k2).tau;
+                k21 = K21(k1,k2).K; % Lower case k21 for not overwriting K21
+                lk = length(k21);
+                Int21 = 0;
+                for k3 = 2:200
+                    dK = k21(k3) - k21(k3-1);
+                    Int21 = Int21 + 1/OMG^2*dK/dt*(sin(OMG*k3*dt)-sin(OMG*(k3-1)*dt));
+                end
+                Int21 = Int21 + 1/OMG*(k21(1)-k21(lk)*cos(OMG*200*dt));
+                A21_inf(k1,k2) = A21(k1,k2) + 1/omg_fix*Int21;                
+                
+                tau22 = K22(k1,k2).tau;
+                k22 = K22(k1,k2).K; % Lower case k22 for not overwriting K22
+                lk = length(k22);
+                Int22 = 0;
+                for k3 = 2:200
+                    dK = k22(k3) - k22(k3-1);
+                    Int22 = Int22 + 1/OMG^2*dK/dt*(sin(OMG*k3*dt)-sin(OMG*(k3-1)*dt));
+                end
+                Int22 = Int22 + 1/OMG*(k22(1)-k22(lk)*cos(OMG*200*dt));
+                A22_inf(k1,k2) = A22(k1,k2) + 1/omg_fix*Int22;                
+            end
+        end
+        
+    end
+    
 end
 
 if imemory == 0
-   save('hydro_data','A11','A12','A21','A22')
+    save('hydro_data','A11','A12','A21','A22')
 elseif imemory == 1
     save('hydro_data','A11_inf','A12_inf','A21_inf','A22_inf','K11','K12','K21','K22')
 end
-
-
-
-
-
-
-
-
 
 % save memory_ss A11 A12 A21 A22 B11 B12 B21 B22 omg dof_unst11 dof_unst12 dof_unst21 dof_unst22
 

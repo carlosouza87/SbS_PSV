@@ -1,10 +1,5 @@
-%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%
-%%          Program for simulation of ship-to-ship operations         %%
-%%     Developed by naval engineering students of the Universidade de S�o Paulo     %%
-%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%
-%Julho-2014:
-% A mudan�a de wavesmd para zero n�o influencia no c�lculo da integral de
-% convolu��o
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%
+%%     Simulation of side-by-side operations between a PSV and an FPSO    %%
 
 clear variables global;close all;clc
 
@@ -12,8 +7,9 @@ global ktime dt data variable
 global iwaves1st iwavesmd iwind icontrol_psv ihdsuction imemory icoupling iplot_control ivalida icurr imooring
 t1 = cputime;
 nn=0;
+
 %% Time parameters
-dt = .2;% time step [s]   para dt=.4 por exemplo acontecem alguns problemas na plotagem das figuras 11 em diante.
+dt = .1;% time step [s]   
 tfinal = 100;% total simulation time [s]
 lt = tfinal/dt+1;   % number of time steps including zero []
 tsim = 0:dt:tfinal; % time vector
@@ -22,37 +18,32 @@ data.constants.dt = dt;
 variable.dt = dt;
 variable.lt=lt;
 
-%% General variables (define flags usados no eqmain, por exemplo, se
-%% ifenders==1 faz...)
-d2r = pi/180;   % constant to transform an angle in degrees to radians
-r2d = 180/pi;   % constant to transform an angle in radians to degrees
-knt2ms = 0.5144444444444444; % constant to transform a velocity in knots to meters per second
-ms2knt = 1/knt2ms;          % constant to transform a velocity in meters per second to knots
+%% Simulation type and number of DOFs
+% Determine type of simulation, "isimtype": 
+% isimtype = 1, for Cummins equation 
+% isimtype = 2, for LF + WF superposition 
+isimtype = 1;   
 
-iwaves1st = 1;                % flag for 1st order wave loads
-iwavesmd = 1;                % flag for meand drift loads
-iwind = 0;                   % flag for wind loads
-icurr = 0;                   % flag for current loads
-icontrol_psv = 0;           % flag for the psv control system
-ihdsuction = 0;             % flag for hydrodynamci suction loads
-icoupling = 0;                %flag for coupled dynamics       %%%%%fazer comentario no relat�rio sobre o que � esse fator programado pelo Carlos Eduardo
-ivalida = 0;                   %flag to confirm validation of convolution evaluation
-imemory = 0;                 % flag for memory effects
-imooring = 0;                 % flag for mooring system
+% Determine number o degrees of freedom, "idof":
+% idof = 1, for 6 DOF
+% idof = 2, for 3 DOF
+idof = 1;
 
-%% Simulation data reading
-dimensions      % m-file with definition of ships dimensions fpr each loading case
+%% Flags for switching modules on/off
+iwaves1st = 1;       % Flag for 1st order wave loads
+iwavesmd = 1;        % Flag for meand drift loads
+iwind = 0;           % Flag for wind loads
+icurr = 0;           % Flag for current loads
+icontrol_psv = 0;    % Flag for the psv control system
+ihdsuction = 0;      % Flag for hydrodynamci suction loads
+icoupling = 0;       % Flag for coupled dynamics
+imooring = 0;        % Flag for FPSO mooring system
+% imemory = 0;       % Flag for memory effects
+% ivalida = 0;       % Flag to confirm validation of convolution evaluation
 
-%esses dados ser�o usados depois no environment.data dentro do simdata
-
-betaw = 195;    % wave incidence direction [deg]
-Hs = 2.5;       % significant wave height [m]
-Tp = 9;         % wave peak period [s] %na frequencia relacionada a esse Tp � onde A_fixfreq e B_fixfreq � avaliada
-gammaw = betaw;   % wind incidence direction [deg]
-Uw = 10;           % wind velocity [m/s]
-alphac = 180;      % current incidence direction [deg]
-Uc = 1.0;          % current velocity [m/s]
-simdata           % loading of simulation data
+%% Loading of simulation data
+dimensions      % m-file with definition of ships dimensions for each loading case
+simdata         % Read simulation parameters and organize simulation data into structures
 
 %% Environmental loads
 % Waves
