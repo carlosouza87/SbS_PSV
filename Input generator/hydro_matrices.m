@@ -86,11 +86,11 @@ if imemory == 0
     A21 = A21*rho .* (ULEN .^ scaleA);
     A22 = A22*rho .* (ULEN .^ scaleA);
     
-    %    % Transform to Fossen axes
-    %    A11 = Tscale*A11*Tscale;
-    %    A12 = Tscale*A12*Tscale;
-    %    A21 = Tscale*A21*Tscale;
-    %    A22 = Tscale*A22*Tscale;
+    % Transform to Fossen axes
+    A11 = Tscale*A11*Tscale;
+    A12 = Tscale*A12*Tscale;
+    A21 = Tscale*A21*Tscale;
+    A22 = Tscale*A22*Tscale;
     
 elseif imemory == 1
     % If LF and WF loads are to be considered together in the equations of
@@ -168,10 +168,11 @@ elseif imemory == 1
         B12(:,:,k3) = B12_dim;
         B21(:,:,k3) = B21_dim;
         B22(:,:,k3) = B22_dim;
-        %        B11(:,:,k3) = Tscale*B11*Tscale;
-        %        B12(:,:,k3) = Tscale*B12*Tscale;
-        %        B21(:,:,k3) = Tscale*B21*Tscale;
-        %        B22(:,:,k3) = Tscale*B22*Tscale;
+        
+        B11(:,:,k3) = Tscale*B11*Tscale;
+        B12(:,:,k3) = Tscale*B12*Tscale;
+        B21(:,:,k3) = Tscale*B21*Tscale;
+        B22(:,:,k3) = Tscale*B22*Tscale;
     end
     
     % Creation of matrices with "delta B's", that is, the difference
@@ -292,11 +293,11 @@ elseif imemory == 1
         A21 = A21*rho .* (ULEN .^ scaleA);
         A22 = A22*rho .* (ULEN .^ scaleA);
         
-        %        % Transform to Fossen axes
-        %        A11 = Tscale*A11*Tscale;
-        %        A12 = Tscale*A12*Tscale;
-        %        A21 = Tscale*A21*Tscale;
-        %        A22 = Tscale*A22*Tscale;
+        % Transform to Fossen axes
+        A11 = Tscale*A11*Tscale;
+        A12 = Tscale*A12*Tscale;
+        A21 = Tscale*A21*Tscale;
+        A22 = Tscale*A22*Tscale;
         
         A11_inf = zeros(6,6);
         A12_inf = zeros(6,6);

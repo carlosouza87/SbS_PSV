@@ -1,13 +1,4 @@
-% vessel1  = input('Vessel 1 file name: ','s');
-% draft1  = input('Vessel 1 draft: ');
-% vessel2  = input('Vessel 2 file name: ','s');
-% draft2  = input('Vessel 2 draft: ');
-
-%eval(['load MRB_' vessel1 '.txt -ascii']);
-%eval(['MRB1 = MRB_' vessel1 ' ;'])
-%eval(['load MRB_' vessel2 '.txt -ascii'])
-%eval(['MRB2 = MRB_' vessel2 ';'])
-
+% Define rigid-body matrices for the FPSO and PSV
 MRB1 = [318620 0 0 0 0 0;0 318620 0 0 0 0;0 0 318620 0 0 0;
         0 0 0 1.20e8 0 0;0 0 0 0 1.91e9 0;0 0 0 0 0 1.91e9]*1e3; % FPSO
 
@@ -26,7 +17,7 @@ data.ship(1).MRB = MRB1;
 data.ship(2).MRB = MRB2;
 
 %--------------------------------------------------------------------------
-%% Read rigid-body mass parameters from *.out file
+% Read rigid-body mass parameters from *.out file
 %--------------------------------------------------------------------------
 count = 0;
 
@@ -151,40 +142,11 @@ end   % End WHILE
 fclose(fid2);
 
 %% Hydrodynamic data
-load memory_ss
+load hydro_data
 % load tankerABC
 
-% A11r = vesselABC.Ar;
-% B11r = vesselABC.Br;
-% C11r = vesselABC.Cr;
-% A22r = vesselABC.Ar;
-% B22r = vesselABC.Br;
-% C22r = vesselABC.Cr;
-% cpl_mem = [1,1;2,2;2,4;2,6;3,3;3,5;4,2;4,4;4,6;5,1;5,5;6,2;6,4;6,6];
 cpl_mem = [1,1;1,3;1,5;2,2;2,4;2,6;3,1;3,3;3,5;4,2;4,4;4,6;5,1;5,3;5,5;6,2;6,4;6,6];
-% cpl_mem = [1,1;1,2;1,3;1,4;1,5;1,6;2,1;2,2;2,3;2,4;2,5;2,6;3,1;3,2;3,3;3,4;3,5;3,6;...
-%     4,1;4,2;4,3;4,4;4,5;4,6;5,1;5,2;5,3;5,4;5,5;5,6;6,1;6,2;6,3;6,4;6,5;6,6];
-[Amem11,Bmem11,Cmem11,sizechi11,dof_mem11] = mem_matrices(cpl_mem,A11r,B11r,C11r);
-[Amem12,Bmem12,Cmem12,sizechi12,dof_mem12] = mem_matrices(cpl_mem,A12r,B12r,C12r);
-[Amem21,Bmem21,Cmem21,sizechi21,dof_mem21] = mem_matrices(cpl_mem,A21r,B21r,C21r);
-[Amem22,Bmem22,Cmem22,sizechi22,dof_mem22] = mem_matrices(cpl_mem,A22r,B22r,C22r);
 
-data.hydro.Amem11 = Amem11;
-data.hydro.Bmem11 = Bmem11;
-data.hydro.Cmem11 = Cmem11;
-data.hydro.dof_mem11 = dof_mem11;
-data.hydro.Amem12 = Amem12;
-data.hydro.Bmem12 = Bmem12;
-data.hydro.Cmem12 = Cmem12;
-data.hydro.dof_mem12 = dof_mem12;
-data.hydro.Amem21 = Amem21;
-data.hydro.Bmem21 = Bmem21;
-data.hydro.Cmem21 = Cmem21;
-data.hydro.dof_mem21 = dof_mem21;
-data.hydro.Amem22 = Amem22;
-data.hydro.Bmem22 = Bmem22;
-data.hydro.Cmem22 = Cmem22;
-data.hydro.dof_mem22 = dof_mem22;
 data.hydro.freqs = freqs;
 data.hydro.A11 = A11;
 data.hydro.A12 = A12;

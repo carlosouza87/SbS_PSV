@@ -1,7 +1,7 @@
 %% Constant parameters and unity conversion factors
 % In principle, there is no need for changing any of these parameters.
 
-rho_water = 1025; % Water density [kg/m^3]
+rho_water = 1025;   % Water density [kg/m^3]
 g = 9.8;            % Acceleration of gravity [m/s^2]
 d2r = pi/180;       % Conversion factor, degrees to radians [rad/deg]
 r2d = 180/pi;       % Conversion factor, radians to degrees [deg/rad]
@@ -127,7 +127,7 @@ GMl = GMl_PSV; % Longitudinal metacentric height (full loaded ship) [m]
 data.ship(2).G = diag([0;0;rho_water*g*Awp;rho_water*g*dsp*GMt;rho_water*g*dsp*GMl;0]);
 
 % Initial state vectors
- data.ship(2).eta0 = [0;46.75;0;0;0;0]; %CG foi colocado na linha d'água, foi trocado de 55 para 40, soma das duas meia bocas mais distancia entre navios
+ data.ship(2).eta0 = [0;46.75;0;0;0;0]; %CG foi colocado na linha d'ï¿½gua, foi trocado de 55 para 40, soma das duas meia bocas mais distancia entre navios
  data.ship(2).nu0 = [0;0;0;0;0;0];
 
 % Parameters for mean drift forces calculation scheduling

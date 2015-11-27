@@ -45,7 +45,8 @@ hydro_matrices
 % 2nd order wave loads data, for isimtype == 2. 
 waveforces_data
 
-% Consolidate the data above into structures for the simulation.
+% Define rigid-body matrices, read further information from WAMIT .out files and
+% consolidate the data into structures for the simulation.
 ship_matrices
 
 clear all;clc
