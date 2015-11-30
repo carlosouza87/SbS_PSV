@@ -22,54 +22,31 @@ clear variables global;close all;clc
 %   0.00000E+00  0.00000E+00  0.00000E+00  0.00000E+00  0.00000E+00  5.06176E+11
 
 
+% Determine type of simulation, "isimtype": 
+% isimtype = 1, for Cummins equation 
+% isimtype = 2, for LF + WF superposition 
+isimtype = 1;  
 
+% Determine string with the name of the WAMIT output, without any extension
+caseid = ['conjunto']; % Water density [kg/m^3]
 
-
-%% Read WAMIT data
-caseid = ['conjunto']; % String with the name of the WAMIT output, without any extension
+% Constant values adopted in WAMIT calculations
+rho = 1025; % Water density [kg/m^3]
+g = 9.8; % Acceleration of gravity [kg/m^3]
+ULEN = 1; % WAMIT scaling factor []
 
 % Read added mass and radiation damping, and calculate retardation functions (if isimtype == 1).
 if isimtype == 1
-    dt = 0.1; % Time-increment for retardation functions (better if matches simulation dt) [s]
+    dt = 0.1; % Time-step for retardation functions (should match simulation time-step) [s]
 end
-hydro_matrices % Routine for extracting added mass and calculating retardation functions
+hydro_matrices
 
 % Read 1st and 2nd order wave loads data, for isymtype == 1, and RAOs and 
-% 2nd order wave loads data, for isimtype == 2. Then, generate structures
-% with the data.
-waveforces_data
+% 2nd order wave loads data, for isimtype == 2. 
+waveloads_data
 
-% Consolidate the data above into structures for the simulation.
+% Define rigid-body matrices, read further information from WAMIT .out files and
+% consolidate the data into structures for the simulation.
 ship_matrices
-
-
-
-
-for k1_out = 1:4
-    for k2_out = 1:length(caso(k1_out).amort)
-        display(['Caso ' num2str(k1_out) ', D = ' num2str(caso(k1_out).amort(k2_out))]) % Displays the case and damping factor on the screen
-        amt = caso(k1_out).amort(k2_out);
-        if log10(amt) == -Inf
-            amt_str = '0';
-        else
-            base10 = floor(log10(amt));
-            mult = amt/10^base10;
-            amt_str = [num2str(mult) 'E' num2str(base10)];
-        end
-        file_hydro_matrices = ['cs' num2str(k1_out) 'd3m']; % String with the name of the WAMIT output
-        hydro_matrices % Routine for generating added mass and potential damping coupled matrices
-        %         hydro_unc % Routine for generating added mass and potential damping uncoupled matrices
-        file_waveforces_data = ['cs' num2str(k1_out) 'd3m_D_' amt_str]; % String with the name of the WAMIT output with 1st order wave loads
-        waveforces_data % Routine for reading 1st and 2nd order wave loads data and generating correspondent structures
-        vessel1 = caso(k1_out).arq_isolado_vlcc;
-        vessel2 = caso(k1_out).arq_isolado_shuttle;
-        draft1 = caso(k1_out).calado_vlcc;
-        draft2 = caso(k1_out).calado_shuttle;
-        %         filename = ['hydrodata_' file_waveforces_data]; % String with the name of the variable with hydrodynamic data
-        filename = ['cnpq_10m'];
-        ship_matrices % Routine for generating the structure with hydrodynamic data to be used in the simulator
-        %         ship_matrices_unc
-    end
-end
 
 clear all;clc

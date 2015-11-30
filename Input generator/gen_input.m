@@ -43,7 +43,7 @@ hydro_matrices
 
 % Read 1st and 2nd order wave loads data, for isymtype == 1, and RAOs and 
 % 2nd order wave loads data, for isimtype == 2. 
-waveforces_data
+waveloads
 
 % Define rigid-body matrices, read further information from WAMIT .out files and
 % consolidate the data into structures for the simulation.

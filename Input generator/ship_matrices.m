@@ -1,20 +1,56 @@
-% Define rigid-body matrices for the FPSO and PSV
-MRB1 = [318620 0 0 0 0 0;0 318620 0 0 0 0;0 0 318620 0 0 0;
-        0 0 0 1.20e8 0 0;0 0 0 0 1.91e9 0;0 0 0 0 0 1.91e9]*1e3; % FPSO
+% CONTINUAR DE ROLL DAMPING!
 
-MRB2 = [8170 0 0 0 0 0;0 8170 0 0 0 0;0 0 8170 0 0 0;
-        0 0 0 3.62e5 0 0;0 0 0 0 4.04e6 0;0 0 0 0 0 4.04e6]*1e3; % PSV
+% Define rigid-body inertia matrices for both vessels
+MRB1 = [318620 0 0 0 0 0;
+        0 318620 0 0 0 0;
+        0 0 318620 0 0 0;
+        0 0 0 1.20e8 0 0;
+        0 0 0 0 1.91e9 0;
+        0 0 0 0 0 1.91e9]*1e3; % FPSO
+
+MRB2 = [8170 0 0 0 0 0;
+        0 8170 0 0 0 0;
+        0 0 8170 0 0 0;
+        0 0 0 3.62e5 0 0;
+        0 0 0 0 4.04e6 0;
+        0 0 0 0 0 4.04e6]*1e3; % PSV
 
 T_gdf = [1 -1 -1];             % Wamit2Fossen axes (sign correction)
 Tscale = diag([T_gdf T_gdf]);  % 6 DOF transformation matrix for A and B data
 
 
-%% Rigid body data
-% mass matrices in CO (Fossen axes)
-MRB1 =  Tscale*MRB1*Tscale;
-MRB2 =  Tscale*MRB2*Tscale;
+% % Transform inertia matrices to Fossen axes
+% MRB1 =  Tscale*MRB1*Tscale;
+% MRB2 =  Tscale*MRB2*Tscale;
+
 data.ship(1).MRB = MRB1;
 data.ship(2).MRB = MRB2;
+
+
+% Define hydrostatic restoration matrices for both vessels
+scl = rho*g;
+L = ULEN;
+
+C1 = [0 0 0 0 0 0;
+      0 0 0 0 0 0;
+      0 0 15705*scl*L^2 0 0.14358e6*scl*L^3 0;
+      0 0 0 0.24356e7*scl*L^4 0 -0.10537e6*scl*L^4;
+      0 0 0.14358e6*scl*L^3 0 0.11347e9*scl*L^4 0;
+      0 0 0 0 0 0]; % FPSO
+ 
+C2 = [0 0 0 0 0 0; 
+      0 0 0 0 0 0;
+      0 0 1458.7*scl*L^2 0 7177.1*scl*L^3 0;
+      0 0 0 24197*scl*L^4 0 228.09*scl*L^4;
+      0 0 7177.1*scl*L^3 0 0.75337e6*scl*L^4 0;
+      0 0 0 0 0 0]; % PSV
+  
+  data.ship(1).G = C1;
+  data.ship(2).G = C2;
+      
+      
+% External roll damping
+
 
 %--------------------------------------------------------------------------
 % Read rigid-body mass parameters from *.out file
@@ -26,6 +62,7 @@ fid1 = fopen(strcat('FPSO.out'));
 
 rho = 1025;
 g = 9.8;
+
 
 while feof(fid1) == 0,
     count = count + 1;
