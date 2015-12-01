@@ -1,5 +1,9 @@
-% It is admitted that the WAMIT files bring either both asymptotic values (omg
-% = 0 rad/s and omg = Inf) or none of them.
+% Read added mass and radiation damping from WAMIT .1 file. Then, output retardation
+% functions (and the respective time limits) and infinite-frequency added mass
+% matrices, if Cummins equations are considered, or zero-frequency added mass
+% matrices, if the LF+WF motions superposition approach is adopted. For either 
+% case, matrices have indeces 11 (corresponding to ship 1), 12 (ship 1 over ship
+% 2), 21 (ship 2 over ship 1) and 22 (ship 2).
 
 % caseid = 'conjunto';
 dt = 0.1; % Time step [s]
@@ -47,48 +51,8 @@ else
     omg_asmp = 0; % No asymptotic data
 end
 
-if imemory == 0
-    % If the users choses the LF + WF superposition approach, no memory effects are
-    % considered and therefore there is no need for calculating the retardation
-    % functions. The radiation loads considered in the equations of motions are only
-    % those for omg = 0 rad/s, which may either be already provided by WAMIT or
-    % extrapolated from the available data.
-    if omg_asmp == 0
-        A11 = zeros(6,6,1); % Matrix of added mass for ship 1
-        A12 = zeros(6,6,1); % Matrix of added mass for the effects of ship 1 motions over ship 2
-        A21 = zeros(6,6,1); % Matrix of added mass for the effects of ship 2 motions over ship 1
-        A22 = zeros(6,6,1); % Matrix of added mass for ship 2
-        for k1 = 1:6
-            for k2 = 1:6
-                % Extrapolate the added masses for omg = 0 rad/s
-                A11(k1,k2) = interp1(omg,Aij_sorted(k1,k2,:),0,'spline','extrap');
-                A12(k1,k2) = interp1(omg,Aij_sorted(k1,k2+6,:),0,'spline','extrap');
-                A21(k1,k2) = interp1(omg,Aij_sorted(k1+6,k2,:),0,'spline','extrap');
-                A22(k1,k2) = interp1(omg,Aij_sorted(k1+6,k2+6,:),0,'spline','extrap');
-            end
-        end
-    elseif omg_asmp == 1
-        % Take the added mass matrices for omg = 0 rad/s
-        A11 = Aij_sorted(1:6,1:6,1);
-        A12 = Aij_sorted(1:6,7:12,1);
-        A21 = Aij_sorted(7:12,1:6,1);
-        A22 = Aij_sorted(7:12,7:12,1);
-    end
-    
-    % Scale Wamit data to SI system (Wamit axes)
-    A11 = A11*rho .* (ULEN .^ scaleA);
-    A12 = A12*rho .* (ULEN .^ scaleA);
-    A21 = A21*rho .* (ULEN .^ scaleA);
-    A22 = A22*rho .* (ULEN .^ scaleA);
-    
-    %     % Transform to Fossen axes
-    %     A11 = Tscale*A11*Tscale;
-    %     A12 = Tscale*A12*Tscale;
-    %     A21 = Tscale*A21*Tscale;
-    %     A22 = Tscale*A22*Tscale;
-    
-elseif imemory == 1
-    % If LF and WF loads are to be considered together in the equations of
+if isimtype == 1
+ % If LF and WF loads are to be considered together in the equations of
     % motions, a unified model for maneuvering and seakeeping must be adopted
     % and therefore the radiation loads shall be represented through the convolution
     % of retardation functions. This ensures that the radiation effects due to
@@ -349,8 +313,46 @@ elseif imemory == 1
             end
         end
         
+    end    
+elseif isimtype == 2
+       % If the users choses the LF + WF superposition approach, no memory effects are
+    % considered and therefore there is no need for calculating the retardation
+    % functions. The radiation loads considered in the equations of motions are only
+    % those for omg = 0 rad/s, which may either be already provided by WAMIT or
+    % extrapolated from the available data.
+    if omg_asmp == 0
+        A11 = zeros(6,6,1); % Matrix of added mass for ship 1
+        A12 = zeros(6,6,1); % Matrix of added mass for the effects of ship 1 motions over ship 2
+        A21 = zeros(6,6,1); % Matrix of added mass for the effects of ship 2 motions over ship 1
+        A22 = zeros(6,6,1); % Matrix of added mass for ship 2
+        for k1 = 1:6
+            for k2 = 1:6
+                % Extrapolate the added masses for omg = 0 rad/s
+                A11(k1,k2) = interp1(omg,Aij_sorted(k1,k2,:),0,'spline','extrap');
+                A12(k1,k2) = interp1(omg,Aij_sorted(k1,k2+6,:),0,'spline','extrap');
+                A21(k1,k2) = interp1(omg,Aij_sorted(k1+6,k2,:),0,'spline','extrap');
+                A22(k1,k2) = interp1(omg,Aij_sorted(k1+6,k2+6,:),0,'spline','extrap');
+            end
+        end
+    elseif omg_asmp == 1
+        % Take the added mass matrices for omg = 0 rad/s
+        A11 = Aij_sorted(1:6,1:6,1);
+        A12 = Aij_sorted(1:6,7:12,1);
+        A21 = Aij_sorted(7:12,1:6,1);
+        A22 = Aij_sorted(7:12,7:12,1);
     end
     
+    % Scale Wamit data to SI system (Wamit axes)
+    A11 = A11*rho .* (ULEN .^ scaleA);
+    A12 = A12*rho .* (ULEN .^ scaleA);
+    A21 = A21*rho .* (ULEN .^ scaleA);
+    A22 = A22*rho .* (ULEN .^ scaleA);
+    
+    %     % Transform to Fossen axes
+    %     A11 = Tscale*A11*Tscale;
+    %     A12 = Tscale*A12*Tscale;
+    %     A21 = Tscale*A21*Tscale;
+    %     A22 = Tscale*A22*Tscale;    
 end
 
 % Save relevant variables to be used in the simulations

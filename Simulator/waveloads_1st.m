@@ -1,4 +1,4 @@
-    function [Fwf1,Fwf2,Fwf3,Fwf4,Fwf5,Fwf6,Sl1,Sl2,Sl3,Sl4,Sl5,Sl6] = waveloads_1st(t,Hs,Tp,spec,amp,pha,freqs,randu)
+function [Fwf1,Fwf2,Fwf3,Fwf4,Fwf5,Fwf6,Sl1,Sl2,Sl3,Sl4,Sl5,Sl6] = waveloads_1st(t,Hs,Tp,spec,amp,pha,freqs,randu)
 
 lt = length(t);
 nfreqs = length(freqs); 
@@ -8,7 +8,7 @@ w = linspace(freqs(1),freqs(nfreqs),nfreqs);
 dw = w(2) - w(1);
 
 for k1 = 1:nincid
-    amp1(:,k1) = interp1(freqs,amp(:,k1,1),w,'spline','extrap'); %checar se ela está dimensionalizada por rho*g no input generator
+    amp1(:,k1) = interp1(freqs,amp(:,k1,1),w,'spline','extrap'); %checar se ela estï¿½ dimensionalizada por rho*g no input generator
     amp2(:,k1) = interp1(freqs,amp(:,k1,2),w,'spline','extrap');
     amp3(:,k1) = interp1(freqs,amp(:,k1,3),w,'spline','extrap');
     amp4(:,k1) = interp1(freqs,amp(:,k1,4),w,'spline','extrap');
@@ -64,7 +64,7 @@ Sl6 = zeros(nfreqs,nincid);
 for k1 = 1:nincid
     
     for k2 = 1:nfreqs        %troquei 1:nfreqs por 1:50 %retroquei para o primeiro
-        Sl1(k2,k1) = amp1(k2,k1)^2*Sw(k2); %função de transferencia ao quadrado vezes espectro da onda, dá o espectro da embarcação pela frequência
+        Sl1(k2,k1) = amp1(k2,k1)^2*Sw(k2); %funï¿½ï¿½o de transferencia ao quadrado vezes espectro da onda, dï¿½ o espectro da embarcaï¿½ï¿½o pela frequï¿½ncia
         Sl2(k2,k1) = amp2(k2,k1)^2*Sw(k2);
         Sl3(k2,k1) = amp3(k2,k1)^2*Sw(k2);
         Sl4(k2,k1) = amp4(k2,k1)^2*Sw(k2);
@@ -76,7 +76,7 @@ for k1 = 1:nincid
         A4 = sqrt(2*Sl4(k2,k1)*dw);
         A5 = sqrt(2*Sl5(k2,k1)*dw);
         A6 = sqrt(2*Sl6(k2,k1)*dw);
-        Fwf1(:,k1) = Fwf1(:,k1) + A1*cos(freqs(k2)*t'+pha1(k2,k1)+2*pi*randu(k2)); %aqui como uma somatória da contribuição de todas as frequencias
+        Fwf1(:,k1) = Fwf1(:,k1) + A1*cos(freqs(k2)*t'+pha1(k2,k1)+2*pi*randu(k2)); %aqui como uma somatï¿½ria da contribuiï¿½ï¿½o de todas as frequencias
         Fwf2(:,k1) = Fwf2(:,k1) + A2*cos(freqs(k2)*t'+pha2(k2,k1)+2*pi*randu(k2));
         Fwf3(:,k1) = Fwf2(:,k1) + A3*cos(freqs(k2)*t'+pha3(k2,k1)+2*pi*randu(k2));
         Fwf4(:,k1) = Fwf2(:,k1) + A4*cos(freqs(k2)*t'+pha4(k2,k1)+2*pi*randu(k2));
