@@ -1,12 +1,10 @@
 % Read added mass and radiation damping from WAMIT .1 file. Then, output retardation
 % functions (and the respective time limits) and infinite-frequency added mass
 % matrices, if Cummins equations are considered, or zero-frequency added mass
-% matrices, if the LF+WF motions superposition approach is adopted. For either 
+% matrices, if the LF+WF motions superposition approach is adopted. For either
 % case, matrices have indeces 11 (corresponding to ship 1), 12 (ship 1 over ship
 % 2), 21 (ship 2 over ship 1) and 22 (ship 2).
 
-% caseid = 'conjunto';
-dt = 0.1; % Time step [s]
 inpt1 = [caseid '.1']; % Input file
 imemory = 1;
 
@@ -52,7 +50,7 @@ else
 end
 
 if isimtype == 1
- % If LF and WF loads are to be considered together in the equations of
+    % If LF and WF loads are to be considered together in the equations of
     % motions, a unified model for maneuvering and seakeeping must be adopted
     % and therefore the radiation loads shall be represented through the convolution
     % of retardation functions. This ensures that the radiation effects due to
@@ -313,9 +311,9 @@ if isimtype == 1
             end
         end
         
-    end    
+    end
 elseif isimtype == 2
-       % If the users choses the LF + WF superposition approach, no memory effects are
+    % If the users choses the LF + WF superposition approach, no memory effects are
     % considered and therefore there is no need for calculating the retardation
     % functions. The radiation loads considered in the equations of motions are only
     % those for omg = 0 rad/s, which may either be already provided by WAMIT or
@@ -352,14 +350,14 @@ elseif isimtype == 2
     %     A11 = Tscale*A11*Tscale;
     %     A12 = Tscale*A12*Tscale;
     %     A21 = Tscale*A21*Tscale;
-    %     A22 = Tscale*A22*Tscale;    
+    %     A22 = Tscale*A22*Tscale;
 end
 
 % Save relevant variables to be used in the simulations
-if imemory == 0
+if isimtype == 1
+    save('hydro_data','A11_inf','A12_inf','A21_inf','A22_inf','K11','K12','K21','K22','dt')
+elseif isimtype == 2
     save('hydro_data','A11','A12','A21','A22')
-elseif imemory == 1
-    save('hydro_data','A11_inf','A12_inf','A21_inf','A22_inf','K11','K12','K21','K22')
 end
 
 % References

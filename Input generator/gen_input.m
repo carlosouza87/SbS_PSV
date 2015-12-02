@@ -8,7 +8,8 @@
 % - caseid.3 files - diffraction wave loads transfer functions (isimtype=1), OR
 % - caseid.4 files - response amplitude operators (isimtype = 2);
 % - caseid.9 files - wave drift coefficients (pressure integration method);
-% - caseid.out file;
+% - caseid.out file is not read by the program, but the user must input
+%   some data to ship_matrices which is available there.
 
 clear all;close all;clc
 
@@ -18,7 +19,11 @@ clear all;close all;clc
 isimtype = 1;  
 
 % Determine string with the name of the WAMIT output, without any extension
-caseid = ['conjunto']; % Water density [kg/m^3]
+caseid = ['conjunto_10']; % Water density [kg/m^3]
+
+% Determine time step for calculation of retardation functions, if isimtype
+% == 1. In this case, this will also be the time step fpr the simulation.
+dt = 0.1; % Time step [s]
 
 % Constant values adopted in WAMIT calculations
 rho = 1025; % Water density [kg/m^3]
@@ -37,8 +42,10 @@ hydro_matrices
 % 2nd order wave loads data, for isimtype == 2. 
 waveloads
 
-% Define rigid-body matrices, read further information from WAMIT .out files and
-% consolidate the data into structures for the simulation.
-ship_matrices
+% Read ships dimensions and mechanical properties
+ships_data
+
+% Consolidate the data into structures for the simulation.
+data_struc
 
 clear all;clc

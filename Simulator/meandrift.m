@@ -2,8 +2,6 @@ function [Fm1,Fm2,Fm6] = meandrift(Hs,Tp,spec,amp,pha,freqs)
 
 nfreqs = length(freqs);
 nincid = size(amp,2);
-% nincid
-% amp
 
 D01 = zeros(nfreqs,nincid);
 D02 = zeros(nfreqs,nincid);
@@ -51,15 +49,12 @@ elseif spec == 2
         Sw(k1,1) = ((5*Hs^2*w0^4*(1-0.287*log(gamma)))/(16*w(k1)^5))*exp(-(5/4)*(w0/w(k1))^4)*gamma^Y;
     end
 end
-%nincid é 13
+
 Fm1 = zeros(nincid,1);
 Fm2 = zeros(nincid,1);
 Fm6 = zeros(nincid,1);
-for k1 = 1:nincid % linha 4 daqui ... nincid = size(amp,2);
+for k1 = 1:nincid 
     Fm1(k1,1) = 2*dw*trapz(Sw.*D01ext(:,k1));
     Fm2(k1,1) = 2*dw*trapz(Sw.*D02ext(:,k1));
     Fm6(k1,1) = 2*dw*trapz(Sw.*D06ext(:,k1));
 end
-% Fm1
-% Fm2
-% Fm6

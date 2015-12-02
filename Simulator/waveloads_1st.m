@@ -8,7 +8,7 @@ w = linspace(freqs(1),freqs(nfreqs),nfreqs);
 dw = w(2) - w(1);
 
 for k1 = 1:nincid
-    amp1(:,k1) = interp1(freqs,amp(:,k1,1),w,'spline','extrap'); %checar se ela est� dimensionalizada por rho*g no input generator
+    amp1(:,k1) = interp1(freqs,amp(:,k1,1),w,'spline','extrap');
     amp2(:,k1) = interp1(freqs,amp(:,k1,2),w,'spline','extrap');
     amp3(:,k1) = interp1(freqs,amp(:,k1,3),w,'spline','extrap');
     amp4(:,k1) = interp1(freqs,amp(:,k1,4),w,'spline','extrap');
@@ -22,7 +22,7 @@ for k1 = 1:nincid
     pha6(:,k1) = interp1(freqs,pha(:,k1,6),w,'spline','extrap');
 end
 
-%% Wave spectrum
+% Wave spectrum
 if spec == 1
     % Pierson-Moskowitz spectrum
     A = 4*pi^3*Hs^2/(0.710*Tp)^4;
@@ -46,7 +46,7 @@ elseif spec == 2
     end
 end
 
-%% time-domain realization of the surge, sway and yaw motions
+% Time-domain realization of the surge, sway and yaw motions
 Fwf1 = zeros(lt,nincid);
 Fwf2 = zeros(lt,nincid);
 Fwf3 = zeros(lt,nincid);
@@ -63,48 +63,25 @@ Sl6 = zeros(nfreqs,nincid);
 
 for k1 = 1:nincid
     
-    for k2 = 1:nfreqs        %troquei 1:nfreqs por 1:50 %retroquei para o primeiro
-        Sl1(k2,k1) = amp1(k2,k1)^2*Sw(k2); %fun��o de transferencia ao quadrado vezes espectro da onda, d� o espectro da embarca��o pela frequ�ncia
+    for k2 = 1:nfreqs     
+        Sl1(k2,k1) = amp1(k2,k1)^2*Sw(k2);
         Sl2(k2,k1) = amp2(k2,k1)^2*Sw(k2);
         Sl3(k2,k1) = amp3(k2,k1)^2*Sw(k2);
         Sl4(k2,k1) = amp4(k2,k1)^2*Sw(k2);
         Sl5(k2,k1) = amp5(k2,k1)^2*Sw(k2);
         Sl6(k2,k1) = amp6(k2,k1)^2*Sw(k2);
-        A1 = sqrt(2*Sl1(k2,k1)*dw); %calculo de amplitude
+        A1 = sqrt(2*Sl1(k2,k1)*dw);
         A2 = sqrt(2*Sl2(k2,k1)*dw);
         A3 = sqrt(2*Sl3(k2,k1)*dw);
         A4 = sqrt(2*Sl4(k2,k1)*dw);
         A5 = sqrt(2*Sl5(k2,k1)*dw);
         A6 = sqrt(2*Sl6(k2,k1)*dw);
-        Fwf1(:,k1) = Fwf1(:,k1) + A1*cos(freqs(k2)*t'+pha1(k2,k1)+2*pi*randu(k2)); %aqui como uma somat�ria da contribui��o de todas as frequencias
+        Fwf1(:,k1) = Fwf1(:,k1) + A1*cos(freqs(k2)*t'+pha1(k2,k1)+2*pi*randu(k2));
         Fwf2(:,k1) = Fwf2(:,k1) + A2*cos(freqs(k2)*t'+pha2(k2,k1)+2*pi*randu(k2));
         Fwf3(:,k1) = Fwf2(:,k1) + A3*cos(freqs(k2)*t'+pha3(k2,k1)+2*pi*randu(k2));
         Fwf4(:,k1) = Fwf2(:,k1) + A4*cos(freqs(k2)*t'+pha4(k2,k1)+2*pi*randu(k2));
         Fwf5(:,k1) = Fwf2(:,k1) + A5*cos(freqs(k2)*t'+pha5(k2,k1)+2*pi*randu(k2));
         Fwf6(:,k1) = Fwf6(:,k1) + A6*cos(freqs(k2)*t'+pha6(k2,k1)+2*pi*randu(k2));
-  
-        
-% % % tau_waves1st
-% % % tau_wavesmd
-% % % tau_wind 
-% % % tau_curr
-% % % tau_ctr
-% % % tau_hdsuction
-% %  tau_fnd
-% %  tau_mrn
-% t
-% u
-% 
-% % 
     end
 end
-% % faz a primeira vez pro FPSO e a segunda pro PSV
-% % plot(freqs,Sl3,'o-','LineWidth',2)
-% plot(t,Fwf3(:,1),'o-','LineWidth',2)
-% xlabel('frequencies rad/s')
-% ylabel('Fwf3')
-% % ylabel('Sw')
-% grid on
-Fwf2 = Fwf2;
-Fwf4 = Fwf4;
-Fwf6 = Fwf6;
+
