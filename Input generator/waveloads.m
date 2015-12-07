@@ -1,4 +1,4 @@
-% Load 1st order loads (for isimtype == 1) or motions (for isimtype == 2)
+% Reads 1st order loads (for isimtype == 1) or motions (for isimtype == 2)
 % transfer functions from WAMIT file and save in Nomg X Nincid X 6 
 % matrices, where Nomg is the number of frequencies and Nincid the 
 % number of incidence considered.

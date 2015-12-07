@@ -1,4 +1,4 @@
-% Save ships dimensions and hydrodynamic data in a structure named "data"
+% Saves ships dimensions and hydrodynamic data in a structure named "data"
 
 %% Ships dimensions and properties
 % FPSO

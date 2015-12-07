@@ -23,22 +23,24 @@ Uw = 10.0;      % Wind velocity [m/s]
 alphac = 180;   % Current incidence direction [deg]
 Uc = 1.0;       % Current velocity [m/s]
 
-% wave - 1st order
-load randu1.txt -ascii % list with uniformly distributed values
-data.environment.betaw = betaw; % waves mean direction [deg]
-data.environment.Hs = Hs;   % significant wave height [m]
-data.environment.Tp = Tp; % wave modal period [s]
-data.environment.w_s = 0:0.05:4;   % frequencies for spectrum calculation
+% Wave parameters
+load randu1.txt -ascii % List with uniformly distributed values
+data.environment.betaw = betaw; % Waves mean direction [deg]
+data.environment.Hs = Hs;   % Significant wave height [m]
+data.environment.Tp = Tp; % Wave modal period [s]
+data.environment.w_s = 0.05:0.05:4;   % Frequencies for spectrum calculation
+spec = 2;  % flag for wave spectrum (1 = Pierson-Moskowitz, 2 = JONSWAP)
 
-% wind
+% Wind parameters
 load dados_OCIMF77.txt -ascii
 data.environment.coefwind = dados_OCIMF77; % OCIMF'77 coefficients
-data.environment.gammaw = gammaw;    % wind incidence direction [deg]
-data.environment.Uw = Uw;    % wind velocity [m/s]
+data.environment.gammaw = gammaw;    % Wind incidence direction [deg]
+data.environment.Uw = Uw;    % Wind velocity [m/s]
 gammaw;
-% current
-data.environment.alphac = alphac;    % current incidence direction [deg]
-data.environment.Uc= Uc;    % current velocity [m/s]
+
+% Current parameters
+data.environment.alphac = alphac;    % Current incidence direction [deg]
+data.environment.Uc= Uc;    % Current velocity [m/s]
 
 
 %% Parameters for scheduling of wind and mean drift loads calculation

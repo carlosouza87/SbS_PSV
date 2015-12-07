@@ -1,17 +1,15 @@
 function [dy,y,nsys,nn] = eqsim(y,t,newdt,nn)
 
-global ktime  data variable
+global ktime data variable
 global iwaves1st iwavesmd iwind icontrol_psv ihdsuction imemory icoupling icurr imooring
 
 %% General constants
-%Distânia entre as embarcações é 10m
 r2d = 180/pi;
 d2r = pi/180;
-rho_water = 1025; % water density [kg/m^3]
-rho_air = 1.2;    % density of air [kg/m^3]
-nu_water = 1e-6; % water kinematic viscosity [m^2/s]
-g = 9.8; % acceleration of gravity [m/s^2]
-D = [5e4,0,0;0,3e5,0;0,0,4e8]; % Modificação 0
+rho_water = 1025; % Water density [kg/m^3]
+rho_air = 1.2;    % Density of air [kg/m^3]
+nu_water = 1e-6; % Water kinematic viscosity [m^2/s]
+g = 9.8; % Acceleration of gravity [m/s^2]
 
 %% Ships properties
 % Main dimensions
@@ -81,15 +79,15 @@ else
 end
 
 
-eta = y(1:12,1); %vetor de posições
+eta = y(1:12,1); %vetor de posiï¿½ï¿½es
 nu = y(13:24,1); %vetor de velocidades
-eta1 = eta(1:6); %posições da embarcação 1, o FPSO.
-eta2 = eta(7:12); %posições da embarcação 2, o PSV.
-nu1 = nu(1:6);  %velocidades da embarcação 1
-nu2 = nu(7:12); %velocidades da embarcação 2
+eta1 = eta(1:6); %posiï¿½ï¿½es da embarcaï¿½ï¿½o 1, o FPSO.
+eta2 = eta(7:12); %posiï¿½ï¿½es da embarcaï¿½ï¿½o 2, o PSV.
+nu1 = nu(1:6);  %velocidades da embarcaï¿½ï¿½o 1
+nu2 = nu(7:12); %velocidades da embarcaï¿½ï¿½o 2
 
 
-%hat, são parâmetros necessário ao controle do PSV
+%hat, sï¿½o parï¿½metros necessï¿½rio ao controle do PSV
 eta_hat(1,1) = y(25,1);
 eta_hat(2,1) = y(26,1);
 eta_hat(3,1) = y(27,1);
@@ -108,8 +106,8 @@ b_hat(3,1) = y(39,1);
 
 y_m=[eta2(1); eta2(2); eta2(6)];
 
-variable.eta_hat(:,ktime)=[0;0;0;0;0;0;eta_hat(1,1);eta_hat(2,1);0;0;0;eta_hat(3,1)];
-variable.nu_hat(:,ktime)=[0;0;0;0;0;0;nu_hat(1,1);nu_hat(2,1);0;0;0;nu_hat(3,1)];
+variable.eta_hat(:,ktime) = [0;0;0;0;0;0;eta_hat(1,1);eta_hat(2,1);0;0;0;eta_hat(3,1)];
+variable.nu_hat(:,ktime) = [0;0;0;0;0;0;nu_hat(1,1);nu_hat(2,1);0;0;0;nu_hat(3,1)];
 
 %% Memory terms calculation
 
@@ -153,13 +151,13 @@ if imemory == 1
 end
 
 
-%% Linhas amarração p/ FPSO
+%% Linhas amarraï¿½ï¿½o p/ FPSO
 
 if imooring == 1
     
     [Xkrtot,Ykrtot,Nktot]=amarras(eta1(1),eta1(2),eta1(6),Lpp(1),B(1));
     
-    tau_amarras=[Xkrtot;Ykrtot;0;0;0;Nktot;0;0;0;0;0;0]; %força e momento nos 6 graus de liberdade de uma única embarcação.
+    tau_amarras=[Xkrtot;Ykrtot;0;0;0;Nktot;0;0;0;0;0;0]; %forï¿½a e momento nos 6 graus de liberdade de uma ï¿½nica embarcaï¿½ï¿½o.
     
     variable.tau_amarras(:,ktime) = tau_amarras;
     
@@ -389,7 +387,7 @@ for k1 = 1:2
     
     if formulacao == 1
         
-        %CARLOS - FORMULAÇAO UTILIZANDO VANTORRE
+        %CARLOS - FORMULAï¿½AO UTILIZANDO VANTORRE
         
         if ihdsuction == 1
             
@@ -417,11 +415,11 @@ for k1 = 1:2
         
     else
         
-        %RODRIGO - FORMULAÇAO UTILIZANDO BERNOULLI
+        %RODRIGO - FORMULAï¿½AO UTILIZANDO BERNOULLI
         
         if ihdsuction == 1
             %     psi_rel = (eta(6,1) + eta(12,1))/2;
-            psi_rel = 0; % situação que será realizado no experimento
+            psi_rel = 0; % situaï¿½ï¿½o que serï¿½ realizado no experimento
             alphac = d2r*data.environment.alphac;
             alpha = (alphac - psi_rel) ;
             
@@ -474,7 +472,7 @@ Tb=diag([500,500,500]);
 w01 = 2*pi/(Tpf1); w02 = 2*pi/(Tpf2); w03 = 2*pi/(Tpf3);
 wc1 = 1.1*w01; wc2 = 1.1*w02; wc3 = 1.1*w03;%1.1*w03;
 
-%equações (4.23 a 4.26)
+%equaï¿½ï¿½es (4.23 a 4.26)
 Ka1(1,1) = -2*(zetanotch1-zeta1)*wc1/w01;
 Ka1(2,2) = -2*(zetanotch2-zeta2)*wc2/w02;
 Ka1(3,3) = -2*(zetanotch3-zeta3)*wc3/w03;
@@ -524,10 +522,10 @@ if imemory ==1
     Ainf = data.hydro.A_inf;
     [etap,nup] = eqmot_memory(eta,nu,rg(:,1),rg(:,2),MRB,Ainf,G,mu,tau,newdt);
 else
-    A_fixfreq = [data.hydro.A11_fixfreq data.hydro.A12_fixfreq;data.hydro.A21_fixfreq data.hydro.A22_fixfreq]; %espaço nova coluna e ; nova linha
+    A_fixfreq = [data.hydro.A11_fixfreq data.hydro.A12_fixfreq;data.hydro.A21_fixfreq data.hydro.A22_fixfreq]; %espaï¿½o nova coluna e ; nova linha
     B_fixfreq = [data.hydro.B11_fixfreq data.hydro.B12_fixfreq;data.hydro.B21_fixfreq data.hydro.B22_fixfreq];
-    nu_m = [0*5*0.5144;0;0;0;0;0;0*5*0.5144;0;0;0;0;0]; %foram zerados os primeiro e o sétimo termo pois eles são a vel. avanço que queremos nula.
-    [etap,nup] = eqmot_fixfreq(eta,nu,nu_m,rg(:,1),rg(:,2),MRB,A_fixfreq,B_fixfreq,G,tau); %linha que foi zerada (manter zerada muito problemática)
+    nu_m = [0*5*0.5144;0;0;0;0;0;0*5*0.5144;0;0;0;0;0]; %foram zerados os primeiro e o sï¿½timo termo pois eles sï¿½o a vel. avanï¿½o que queremos nula.
+    [etap,nup] = eqmot_fixfreq(eta,nu,nu_m,rg(:,1),rg(:,2),MRB,A_fixfreq,B_fixfreq,G,tau); %linha que foi zerada (manter zerada muito problemï¿½tica)
 end
 
 variable.etap(:,ktime) = etap(:,1);

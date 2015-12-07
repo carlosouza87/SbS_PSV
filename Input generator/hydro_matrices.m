@@ -1,4 +1,4 @@
-% Read added mass and radiation damping from WAMIT .1 file. Then, output retardation
+% Reads added mass and radiation damping from WAMIT .1 file. Then, output retardation
 % functions (and the respective time limits) and infinite-frequency added mass
 % matrices, if Cummins equations are considered, or zero-frequency added mass
 % matrices, if the LF+WF motions superposition approach is adopted. For either
