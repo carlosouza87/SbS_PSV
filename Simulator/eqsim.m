@@ -79,15 +79,15 @@ else
 end
 
 
-eta = y(1:12,1); %vetor de posi��es
-nu = y(13:24,1); %vetor de velocidades
-eta1 = eta(1:6); %posi��es da embarca��o 1, o FPSO.
-eta2 = eta(7:12); %posi��es da embarca��o 2, o PSV.
-nu1 = nu(1:6);  %velocidades da embarca��o 1
-nu2 = nu(7:12); %velocidades da embarca��o 2
+eta = y(1:12,1); % vetor de posicoes
+nu = y(13:24,1); % vetor de velocidades
+eta1 = eta(1:6); % posicoes da embarcacao 1, o FPSO.
+eta2 = eta(7:12); % posicoes da embarcacao 2, o PSV.
+nu1 = nu(1:6);  % velocidades da embarcacao 1
+nu2 = nu(7:12); % velocidades da embarcacao 2
 
 
-%hat, s�o par�metros necess�rio ao controle do PSV
+%hat, sao parametros necessarios ao controle do PSV
 eta_hat(1,1) = y(25,1);
 eta_hat(2,1) = y(26,1);
 eta_hat(3,1) = y(27,1);
@@ -109,7 +109,7 @@ y_m=[eta2(1); eta2(2); eta2(6)];
 variable.eta_hat(:,ktime) = [0;0;0;0;0;0;eta_hat(1,1);eta_hat(2,1);0;0;0;eta_hat(3,1)];
 variable.nu_hat(:,ktime) = [0;0;0;0;0;0;nu_hat(1,1);nu_hat(2,1);0;0;0;nu_hat(3,1)];
 
-%% Memory terms calculation
+%% Convolution integral calculation for Cummins equation
 
 if imemory == 1
     
@@ -151,13 +151,13 @@ if imemory == 1
 end
 
 
-%% Linhas amarra��o p/ FPSO
+%% FPSO mooring system
 
 if imooring == 1
     
     [Xkrtot,Ykrtot,Nktot]=amarras(eta1(1),eta1(2),eta1(6),Lpp(1),B(1));
     
-    tau_amarras=[Xkrtot;Ykrtot;0;0;0;Nktot;0;0;0;0;0;0]; %for�a e momento nos 6 graus de liberdade de uma �nica embarca��o.
+    tau_amarras=[Xkrtot;Ykrtot;0;0;0;Nktot;0;0;0;0;0;0]; %forca e momento nos 6 graus de liberdade de uma unica embarcacao.
     
     variable.tau_amarras(:,ktime) = tau_amarras;
     
@@ -287,12 +287,8 @@ for k1 = 1:2
     
     
     % Current
-    
-    
     if icurr == 1
-        
         %     if k1 == 1
-        
         alphac = d2r*data.environment.alphac;
         alpha = norm02pi(alphac-psi);   % incidence direction, normalized between 0 and 2*pi [rad]
         Uc = data.environment.Uc;
@@ -302,7 +298,6 @@ for k1 = 1:2
         tau_curr(1+6*(k1-1),1) = Xcurr;
         tau_curr(2+6*(k1-1),1) = Ycurr;
         tau_curr(6+6*(k1-1),1) = Ncurr;
-        
         %     else
         %         alphac = d2r*data.environment.alphac;
         %         alpha = norm02pi(alphac-psi);   % incidence direction, normalized between 0 and 2*pi [rad]
@@ -383,82 +378,36 @@ for k1 = 1:2
     
     %% Suction interaction loads
     
-    formulacao = 2; % 1 = Carlos ; 2 = Rodrigo
     
-    if formulacao == 1
+    %CARLOS - FORMULACAO UTILIZANDO VANTORRE
+    
+    if ihdsuction == 1
         
-        %CARLOS - FORMULA�AO UTILIZANDO VANTORRE
+        alphac = d2r*data.environment.alphac;
+        alpha = norm02pi(alphac-psi);   % incidence direction, normalized between 0 and 2*pi [rad]
+        Uc = data.environment.Uc;
         
-        if ihdsuction == 1
+        if k1 == 1
+            xcc = (eta1(1)-eta2(1))*cos(eta1(6)) + (eta1(2)-eta2(2))*sin(eta1(6));
+            ksi = xcc/(0.5*(Lpp(1)+Lpp(2)));
             
-            alphac = d2r*data.environment.alphac;
-            alpha = norm02pi(alphac-psi);   % incidence direction, normalized between 0 and 2*pi [rad]
-            Uc = data.environment.Uc;
+            U1 = nu(1) - Uc*cos(norm02pi(alphac - eta(6,1)));
+            U2 = nu(7) - Uc*cos(norm02pi(alphac - eta(12,1)));
             
-            if k1 == 1
-                xcc = (eta1(1)-eta2(1))*cos(eta1(6)) + (eta1(2)-eta2(2))*sin(eta1(6));
-                ksi = xcc/(0.5*(Lpp(1)+Lpp(2)));
-                
-                U1 = nu(1) - Uc*cos(norm02pi(alphac - eta(6,1)));
-                U2 = nu(7) - Uc*cos(norm02pi(alphac - eta(12,1)));
-                
-                [Xh,Yh,Nh] = hydrint_vantorre01(ksi,rho_water,Lpp(1),B(1),T(1),U1,U2);
-                tau_hdsuction(1:6,1) = [0;Yh;0;0;0;Nh];
-            elseif k1 == 2
-                [Xh,Yh,Nh] = hydrint_vantorre01(ksi,rho_water,Lpp(2),B(2),T(2),U1,U2);
-                Yh = -Yh;
-                Nh = -Nh;
-                tau_hdsuction(7:12,1) = [0;Yh;0;0;0;Nh];
-            end
+            [Xh,Yh,Nh] = hydrint_vantorre01(ksi,rho_water,Lpp(1),B(1),T(1),U1,U2);
+            tau_hdsuction(1:6,1) = [0;Yh;0;0;0;Nh];
+        elseif k1 == 2
+            [Xh,Yh,Nh] = hydrint_vantorre01(ksi,rho_water,Lpp(2),B(2),T(2),U1,U2);
+            Yh = -Yh;
+            Nh = -Nh;
+            tau_hdsuction(7:12,1) = [0;Yh;0;0;0;Nh];
         end
-        
-        
-    else
-        
-        %RODRIGO - FORMULA�AO UTILIZANDO BERNOULLI
-        
-        if ihdsuction == 1
-            %     psi_rel = (eta(6,1) + eta(12,1))/2;
-            psi_rel = 0; % situa��o que ser� realizado no experimento
-            alphac = d2r*data.environment.alphac;
-            alpha = (alphac - psi_rel) ;
-            
-            % Normalizando entre 0 and 2pi
-            while (alpha > 2*pi ) || (alpha < 0)
-                if alpha > 2*pi
-                    alpha = alpha - 2*pi;
-                end;
-                if alpha < 0
-                    alpha = alpha + 2*pi;
-                end;
-            end;
-            
-            Uc = data.environment.Uc;
-            % ur = Uc*cos(alpha);
-            ur = Uc;
-            
-            d = eta2(2,1) - eta1(2,1) - 0.5*(B(1) + B(2));
-            % d = 10;
-            var_pressao = 0.1*rho_water*ur^2*(1 - (1 + B(2)/(2*d))^2);
-            
-            if k1 == 1
-                Yh = Lpp(2)*T(2)*var_pressao;
-                Yh = Yh;
-                tau_hdsuction(1:6,1) = [0;Yh;0;0;0;0];
-            elseif k1 == 2
-                Yh = Lpp(2)*T(2)*var_pressao;
-                Yh = -Yh;
-                tau_hdsuction(7:12,1) = [0;Yh;0;0;0;0];
-            end
-        end
-        
     end
-    
     variable.ship(1).tau_hdsuction(:,ktime) = tau_hdsuction(1:6,1);
     variable.ship(2).tau_hdsuction(:,ktime) = tau_hdsuction(7:12,1); %tau_hdsuction
     
 end
-nn=nn+1;
+nn = nn + 1;
 
 %% Observer parameters
 zetanotch1 = 1; zetanotch2 = 1; zetanotch3 = 1;
@@ -472,7 +421,7 @@ Tb=diag([500,500,500]);
 w01 = 2*pi/(Tpf1); w02 = 2*pi/(Tpf2); w03 = 2*pi/(Tpf3);
 wc1 = 1.1*w01; wc2 = 1.1*w02; wc3 = 1.1*w03;%1.1*w03;
 
-%equa��es (4.23 a 4.26)
+%equacoes (4.23 a 4.26)
 Ka1(1,1) = -2*(zetanotch1-zeta1)*wc1/w01;
 Ka1(2,2) = -2*(zetanotch2-zeta2)*wc2/w02;
 Ka1(3,3) = -2*(zetanotch3-zeta3)*wc3/w03;
