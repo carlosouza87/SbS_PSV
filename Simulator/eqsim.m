@@ -45,64 +45,17 @@ G2 = data.ship(2).G;
 
 
 %% State vector
-ypos = 0;
-if icoupling == 1
-    sizechi11 = data.hydro.sizechi11;
-    sizechi12 = data.hydro.sizechi12;
-    sizechi21 = data.hydro.sizechi21;
-    sizechi22 = data.hydro.sizechi22;
-    mem(1).dof_mem = data.hydro.dof_mem11;
-    mem(2).dof_mem = data.hydro.dof_mem12;
-    mem(3).dof_mem = data.hydro.dof_mem21;
-    mem(4).dof_mem = data.hydro.dof_mem22;
-    
-    ypos = ypos + neq1+neq2;
-    mem(1).chi = y(ypos+1:ypos+sizechi11,1); % chi11
-    ypos = ypos + sizechi11;
-    mem(2).chi = y(ypos+1:ypos+sizechi12,1); % chi12
-    ypos = ypos + sizechi12;
-    mem(3).chi = y(ypos+1:ypos+sizechi21,1); % chi21
-    ypos = ypos + sizechi21;
-    mem(4).chi = y(ypos+1:ypos+sizechi22,1); % chi22
-    ypos = ypos + sizechi22;
-else
-    sizechi11 = data.hydro.sizechi11;
-    sizechi22 = data.hydro.sizechi22;
-    mem(1).dof_mem = data.hydro.dof_mem11;
-    mem(2).dof_mem = data.hydro.dof_mem22;
-    
-    ypos = ypos + neq1+neq2;
-    mem(1).chi = y(ypos+1:ypos+sizechi11,1); % chi11
-    ypos = ypos + sizechi11;
-    mem(2).chi = y(ypos+1:ypos+sizechi22,1); % chi22
-    ypos = ypos + sizechi22;
-end
+ypos = 0; % Current index of y vector
 
+eta = y(1:12,1); % Positions
+nu = y(13:24,1); % Velocities
+eta1 = eta(1:6); % Vessel 1 (FPSO) positions
+eta2 = eta(7:12); % Vessel 2 (PSV) positions
+nu1 = nu(1:6);  % Vessel 1 (FPSO) velocities
+nu2 = nu(7:12); % Vessel 2 (PSV) velocities
 
-eta = y(1:12,1); % vetor de posicoes
-nu = y(13:24,1); % vetor de velocidades
-eta1 = eta(1:6); % posicoes da embarcacao 1, o FPSO.
-eta2 = eta(7:12); % posicoes da embarcacao 2, o PSV.
-nu1 = nu(1:6);  % velocidades da embarcacao 1
-nu2 = nu(7:12); % velocidades da embarcacao 2
+ypos = ypos + 24; % Update ypos
 
-
-%hat, sao parametros necessarios ao controle do PSV
-eta_hat(1,1) = y(25,1);
-eta_hat(2,1) = y(26,1);
-eta_hat(3,1) = y(27,1);
-nu_hat(1,1) = y(28,1);
-nu_hat(2,1) = y(29,1);
-nu_hat(3,1) = y(30,1);
-ksi_hat(1,1) = y(31,1);
-ksi_hat(2,1) = y(32,1);
-ksi_hat(3,1) = y(33,1);
-ksi_hat(4,1) = y(34,1);
-ksi_hat(5,1) = y(35,1);
-ksi_hat(6,1) = y(36,1);
-b_hat(1,1) = y(37,1);
-b_hat(2,1) = y(38,1);
-b_hat(3,1) = y(39,1);
 
 y_m=[eta2(1); eta2(2); eta2(6)];
 
@@ -318,6 +271,22 @@ for k1 = 1:2
     
     %% Control
     if icontrol_psv == 1
+    % PSV control parameters
+eta_hat(1,1) = y(ypos+1,1);
+eta_hat(2,1) = y(ypos+2,1);
+eta_hat(3,1) = y(ypos+3,1);
+nu_hat(1,1) = y(ypos+4,1);
+nu_hat(2,1) = y(ypos+5,1);
+nu_hat(3,1) = y(ypos+6,1);
+ksi_hat(1,1) = y(ypos+7,1);
+ksi_hat(2,1) = y(ypos+8,1);
+ksi_hat(3,1) = y(ypos+9,1);
+ksi_hat(4,1) = y(ypos+10,1);
+ksi_hat(5,1) = y(ypos+11,1);
+ksi_hat(6,1) = y(ypos+12,1);
+b_hat(1,1) = y(ypos+13,1);
+b_hat(2,1) = y(ypos+14,1);
+b_hat(3,1) = y(ypos+15,1);
         variable.ship(2).eta(:,1) = y(7:12,1);
         
         eta_ref=[data.ship(2).control.xref; data.ship(2).control.yref;data.ship(2).control.psiref];
@@ -466,7 +435,7 @@ MRB2_alt=[MRB2(1,1)*1.1,MRB2(1,2),MRB2(1,6);MRB2(2,1),MRB2(2,2)*1.9,MRB2(2,6);MR
 MRB = [MRB1 zeros(6,6);zeros(6,6) MRB2];
 G = [G1 zeros(6,6);zeros(6,6) G2];
 
-
+% Aqui, trocar imemory por isimtype, eqmot_memory por eqmot_cummins e calcular o mu (Carlos, 08/12/15)
 if imemory ==1
     Ainf = data.hydro.A_inf;
     [etap,nup] = eqmot_memory(eta,nu,rg(:,1),rg(:,2),MRB,Ainf,G,mu,tau,newdt);

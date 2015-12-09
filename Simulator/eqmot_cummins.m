@@ -1,25 +1,27 @@
-function [etap,nup] = eqmot_cummins(eta,nu,rg1,rg2,Mrb,Ainf,G,mu,tau,newdt)
-% function [etap,nup] = eqmot_memory(eta,nu,rg1,rg2,Mrb,Ainf,G,mu,tau)
-% Performs calculation of the equations of motion, with consideration of
-% fluid memory effects. Inputs are:
+function [etap,nup] = eqmot_cummins(eta,nu,rg1,rg2,Mrb,Ainf,G,mu,tau)
+% function [etap,nup] = eqmot_cummins(eta,nu,rg1,rg2,Mrb,Ainf,G,mu,tau)
+% Performs calculation of the equations of motion for both ships, with
+% consideration of fluid memory effects. Inputs are:
 %
-% eta - vector of positions (surge, sway) and heading, earth-fixed reference system
-% nu - vector of velocities (surge, sway and yaw), ship-fixed reference system
-% rg - position of center of gravity
-% Mrb - Rigid body inertia matrix
-% Ainf - Infinity frequency added inertia matrix
-% G - restoring matrix
-% mu - memory terms vector (convolution integral)
-% tau - vector with external forces and moment acting on the ship [N,N,Nm]
+% eta - Vector of positions for both vessels, earth-fixed reference system [12x1]
+% nu - Vector of velocities for both vessels, ship-fixed reference system [12x1]
+% rg1 - Position of center of gravity (ship 1) [1x3]
+% rg2 - Position of center of gravity (ship 2) [1x3]
+% Mrb - Rigid body inertia matrix for both vessels [12x12]
+% Ainf - Infinity frequency added inertia matrix for both vessels, including couplings [12x12]
+% G - Hydrostatic restoration matrix for both vessels [12x12]
+% mu - Convolution integral of Cummins equation, calculated in an external function [12x1]
+% tau - Vector with external forces and moment acting on both ships [12x1]
 %
 % Outputs are:
 %
 % etap - vector with time derivatives of eta
 % nup - vector with time derivatives of nu
 %
-% Carlos Souza, 26/11/2011 - Universidade de São Paulo
+% Carlos Souza, 08/12/2015 - Universidade de São Paulo
 
 %% Nested rigid-body centripetal and Coriolis matrix generator function
+% See eq. 3.66 in (Fossen, 2002)
     function Crb = genCrb(Mrb,nu,rg)
         xg = rg(1);
         yg = rg(2);
@@ -49,6 +51,7 @@ function [etap,nup] = eqmot_cummins(eta,nu,rg1,rg2,Mrb,Ainf,G,mu,tau,newdt)
     end
 
 %% Nested added-mass centripetal and Coriolis matrix generator function
+% See eq. 3.100 in (Fossen, 2002)
     function Ca = genCa(A,nu)
         Asym = 0.5*(A+A');
         Ca = [zeros(3,3) -Smtrx(Asym(1:3,1:3)*nu(1:3,1)+Asym(1:3,4:6)*nu(4:6,1));
@@ -56,19 +59,23 @@ function [etap,nup] = eqmot_cummins(eta,nu,rg1,rg2,Mrb,Ainf,G,mu,tau,newdt)
     end
 
 %% Function body
+% Calculate rigid-body centripetal and Coriolis matrix for each vessel,
+% and include both in a 12 x 12 matrix.
 Crb1 = genCrb(Mrb(1:6,1:6),nu(1:6,1),rg1);
 Crb2 = genCrb(Mrb(7:12,7:12),nu(7:12,1),rg2);
 Crb = [Crb1 zeros(6,6);zeros(6,6) Crb2];
 
+% Calculate added-mass centripetal and Coriolis matrix, using the
+% submatrices of Ainf
 Ca11 = genCa(Ainf(1:6,1:6),nu(1:6,1));
 Ca12 = genCa(Ainf(1:6,7:12),nu(7:12,1));
 Ca21 = genCa(Ainf(7:12,1:6),nu(1:6,1));
 Ca22 = genCa(Ainf(7:12,7:12),nu(7:12,1));
-
 Ca = [Ca11 Ca12;Ca21 Ca22];
-M = Mrb + Ainf;
-D = Ca;
 
+M = Mrb + Ainf; % Total inertia matrix
+
+% Matrix for transformation of coordinates from body-fixed to Earth-fixed frames
 Jth = zeros(6,6,2);
 for k1 = 1:2
     phi = eta(4+(k1-1)*6,1);
@@ -85,11 +92,17 @@ for k1 = 1:2
     
     Jth(:,:,k1) = [Rth zeros(3);zeros(3) Tth];
 end
+
+% Calculate etap from the current value of nu 
 eta1p = Jth(:,:,1)*nu(1:6,1);
 eta2p = Jth(:,:,2)*nu(7:12,1);
 etap = [eta1p;eta2p];
 
-
-% Geta = [Jth(:,:,1)\G(1:6,1:6)*eta(1:6);Jth(:,:,2)\G(7:12,7:12)*eta(7:12)];
-nup = M\(-(Crb+D)*nu-mu-G*eta+tau);
+% Equations of motions for calculating nup
+nup = M\(-(Crb+Ca)*nu-mu-G*eta+tau);
 end
+
+% Reference:
+% Fossen, T. I. (2002) - "Marine control systems - Guidance, Navigation and
+% Control of Ships, Rigs and Underwater Vehicles". Marine Cybernetics,
+% Trondheim, Norway.
