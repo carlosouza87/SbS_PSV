@@ -1,200 +1,97 @@
-function [tau_m1,tau_m2,sgm,swl_exc,mbl_exc] = mooring(eta1,eta2,lines,stiff,swl,mbl,newdt) %problema
-% function [tau_m1,tau_m2,sgm,swl_exc,mbl_exc] = mooring(eta1,eta2,pos1,pos2,lines,stiff,swl,mbl)
-% Calculates mooring loads and verifies wether SWL and MBL are exceeded or
-% not.
-%
-% Inputs:
-% eta1 - position and Euler vectors of the ship 1
-% eta2 - position and Euler vectors of the ship 2
-% lines - lines geometrical properties
-% e.g.: lines = [lengthrope1 lengthrope2 ... lengthropeN
-%                   Drope1     Drope2    ...   Drope3
-%                   X1rope1    X1rope2   ...   X1ropeN
-%                   Y1rope1    Y1rope2   ...   Y1ropeN
-%                   Z1rope1    Z1rope2   ...   Z1ropeN
-%                   X2rope1    X2rope2   ...   X2ropeN
-%                   Y2rope1    Y2rope2   ...   Y2ropeN
-%                   Z2rope1    Z2rope2   ...   Z2ropeN ]
-%
-% where D is the diameter of the rope and (X1, Y1 and Z1) and (X2, Y2 and
-% Z2) are the connection points in the  ships 1 and 2, respectivelly.
-% Units are in S.I.
-% stiff - lines stiffnesses %matriz repetida do programa do carlos eduardo
-% e.g.: stiff = [0        0.02    ...     0.10
-%                T1(0)  T1(0.02)  ...    T1(0.10)
-%                T2(0)  T2(0.02)  ...    T2(0.10)
-%                  .      .        .       .
-%                  .      .        .       .
-%                  .      .        .       .
-%                TN(0)  TN(0.02)  ...    TN(0.10)]
-% where the first row contains rope elongation, and TX is the rope
-% tension?) acredito o correto ser: rope FORCE em newtons.
-% for each of the respective elongations of the rope X.
-% swl - Service Working Load (N)
-% mbl - Minimum Breaking Load (N)
+function [Xmoor,Ymoor,Nmoor,broke] = mooring(coord,lxT,eta_hor)
+% [Xmoor,Ymoor,Nmoor,broke] = mooring(coord,lxT,eta_hor)
+% Calculate horizontal mooring loads based on fairleads and anchors
+% coordinates, and on a lookup table with line lengths and the respective
+% induced tensions. It is admitted that all lines have the same properties.
+% Input is:
+% coord - N x 4 matrix with anchor Earth-fixed coordinates (xa, ya)  
+% and fairlead body-fixed coordinates (xf_bf, yf_bf). The coordinates
+% should be disposed as follows:
+% xa1 ya1 xf_bf1 yf_bf1
+% xa2 ya2 xf_bf2 yf_bf2
+%  .   .    .      .
+%  .   .    .      .
+%  .   .    .      .
+% xaN yaN xf_bfN yf_bfN
 % 
-% Outputs:
-% tau_m1,tau_m2 - 6X1 vectors with the loads induced by the mooring lines
-% on each ship [N, Nm]
-% sgm - vector with the tensions 
-% swl_exc,mbl_exc - flags to check whether swl and mbl are exceeded (1) or
-% not (0)
+% lxT - M x 2 matrix with a lookup table relating the horizontal distance 
+% from a fairlead to the respective anchor and the tension induced in the
+% line. M is the number of distance x tension values available in the
+% table. The distances and tensions should be disposed as follows:
+% l1 T1
+% l2 T2
+% .  .
+% .  .
+% .  .
+% lM TM
 % 
-% Carlos Souza, 24/01/2011 - Universidade de São Paulo
+% eta_hor - 3 x 1 vector with the vessel CG's horizontal posisitions (x and
+% y) and heading (psi).
+% 
+% Output is:
+% Xmoor, Ymoor and Nmoor - Mooring forces in X and Y and and moment around 
+% Z axis in body-fixed coordinates.
+% 
+% broke - N x 1 vector with binary values indicating whether the
+% corresponding line has broken (1) or not (0).
 
-nlin = size(lines,2);%acho que o dois da função size se referencia a colunas
-tau_m1 = zeros(6,nlin);
-tau_m2 = zeros(6,nlin);
-sgm = zeros(nlin,1); %vetor com as tensoes;
-swl_exc = 0;
-mbl_exc = 0;
 
-for k1 = 1:nlin
-    phi1 = eta1(4);
-    theta1 = eta1(5);
-    psi1 = eta1(6);
-%     psi1=0.26;
-    
-    
-    Rth1 = [cos(psi1)*cos(theta1) -sin(psi1)*cos(phi1)+cos(psi1)*sin(theta1)*sin(phi1) sin(psi1)*sin(phi1)+cos(psi1)*cos(phi1)*sin(theta1);
-        sin(psi1)*cos(theta1) cos(psi1)*cos(phi1)+sin(phi1)*sin(theta1)*sin(psi1) -cos(psi1)*sin(phi1)+sin(theta1)*sin(psi1)*cos(phi1);
-        -sin(theta1) cos(theta1)*sin(phi1) cos(theta1)*cos(phi1)];
-    
-    %     Tth1 = [1 sin(phi1)*tan(theta1) cos(phi1)*tan(theta1);
-    %         0 cos(phi1) -sin(phi1);
-    %         0 sin(phi1)/cos(theta1) cos(phi1)/cos(theta1)];
-    
-    %     Jth1 = [Rth1 zeros(3);zeros(3) Tth1];
-    
-    %     P1 = eta1 + Jth1*[lines(3,k1);lines(4,k1);lines(5,k1);0;0;0];
-    P1 = eta1 + [Rth1*[lines(3,k1);lines(4,k1);lines(5,k1)]; 0; 0; 0];
-    X1 = P1(1);
-    Y1 = P1(2);
-    Z1 = P1(3);
-    
-    Pproa1 = eta1 + [Rth1*[166.5;27.25;-6.3]; 0; 0; 0]; %no caso  geral, seria loa/2;
-    
-    
-    Ppopa1 = eta1 + [Rth1*[-166.5;27.25;-6.3]; 0; 0; 0]; %em geral, seria -loa/2;  
-%     Ppopa1 = eta1 + [Rth1*[-166.5;0;-6.3]; 0; 0; 0]  
-    
-    %phi2 = 0.26;
-    phi2 = eta2(4);
-    theta2 = eta2(5);
-    psi2 = eta2(6);
-%     psi2 = 0.26;
-%     
-    Rth2 = [cos(psi2)*cos(theta2) -sin(psi2)*cos(phi2)+cos(psi2)*sin(theta2)*sin(phi2) sin(psi2)*sin(phi2)+cos(psi2)*cos(phi2)*sin(theta2);
-        sin(psi2)*cos(theta2) cos(psi2)*cos(phi2)+sin(phi2)*sin(theta2)*sin(psi2) -cos(psi2)*sin(phi2)+sin(theta2)*sin(psi2)*cos(phi2);
-        -sin(theta2) cos(theta2)*sin(phi2) cos(theta2)*cos(phi2)];
-    
-    %     Tth2 = [1 sin(phi2)*tan(theta2) cos(phi2)*tan(theta2);
-    %         0 cos(phi2) -sin(phi2);
-    %         0 sin(phi2)/cos(theta2) cos(phi2)/cos(theta2)];
-    
-    %     Jth2 = [Rth2 zeros(3);zeros(3) Tth2];
-    
-    %     P2 = eta2 + Jth2*[lines(6,k1);lines(7,k1);lines(8,k1);0;0;0];
-    P2 = eta2 + [Rth2*[lines(6,k1);lines(7,k1);lines(8,k1)]; 0; 0; 0];
-    X2 = P2(1);
-    Y2 = P2(2);
-    Z2 = P2(3);
-    
-    
-    Pproa2 = eta2 + [Rth2*[44;-9.5;-1.4]; 0; 0; 0]; %no caso do PSV, em geral, seria loa/2;
-    Yproa2 = Pproa2(2);
+% CG coordinates and vessel heading
+xg = eta_hor(1);
+yg = eta_hor(2);
+psi = eta_hor(3);
 
-    
-    Ppopa2 = eta2 + [Rth2*[-44;-9.5;-1.4]; 0; 0; 0]; %em geral, seria -loa/2;  
-    Ypopa2 = Ppopa2(2);
-   
-    %proa
-    dir1_proa= (Ppopa1-Pproa1)/norm(Ppopa1-Pproa1); %versor com a direção da embarcação 1, e sentido apontando para Ppopa1.
-    delta_proa = Pproa2 - Pproa1; %vetor de diferença entre a proa das duas embarcações, apontando para a Pproa2.
-    Yproa1_comp = Pproa1(2) + norm(delta_proa)* dir1_proa(2); 
-    
-    %popa
-    dir1_popa= (Pproa1-Ppopa1)/norm(Pproa1-Ppopa1); %versor com a direção da embarcação 1, e sentido apontando para Pproa1.
-    delta_popa = Ppopa2 - Ppopa1; %vetor de diferença entre a popa das duas embarcações, apontando para a Ppopa2.
-    Ypopa1_comp = Ppopa1(2) + norm(delta_popa)* dir1_popa(2); 
+% Anchors coordinates
+xa = coord(:,1);
+ya = coord(:,2);
 
-    if( Yproa2 - Yproa1_comp <= 0)
-        error ('choque entre as embarcações');
-    end
+% Fairleads coordinates (in body-fixed frame)
+xf_bf = coord(:,3);
+yf_bf = coord(:,4);
+
+% Number of lines
+Nlines = size(coord,1);
+
+% Lengths and tensions from lookup table
+l = lxT(:,1);
+T = lxT(:,2);
+
+Xk_bf = zeros(1,Nlines);
+Yk_bf = zeros(1,Nlines);
+Nk_bf = zeros(1,Nlines);
+broke = zeros(1,Nlines);
+
+for k1=1:Nlines
+    % Transform fairlead coordinates to Earth-fixed frame
+    xf = xg + xf_bf(k1)*cos(psi)-yf_bf(k1)*sin(psi);
+    yf = yg + xf_bf(k1)*sin(psi)+yf_bf(k1)*cos(psi);
     
-    if( Ypopa2 - Ypopa1_comp <= 0) %a expressão a direita da subtração representa uma correção para transportarmos o ponto Ypopa1 
-%que está no extremo até a mesma cota em X do ponto de comparação Ypopa2.
-        error ('choque entre as embarcações');
-    end
+    % Distance from current fairlead to respective anchor
+    dist_fa = sqrt((xf-xa(k1))^2+(yf-ya(k1))^2);
     
-    d = sqrt((X1-X2)^2+(Y1-Y2)^2+(Z1-Z2)^2);% distancia em aprox. 6.2 corda rompe
-%     if(k1==1)
-%     d
-%      end
-%     if (newdt==1)
-%         xxxx=1;
-%     end
-    direc1 = [(X1-X2)/d;(Y1-Y2)/d;(Z1-Z2)/d];%criou um vetor com as mesma direções de d mas cujo modulo é 1;.
-    if d > lines(1,k1)
-        eps = (d-lines(1,k1))/lines(1,k1);
-        %         T = interp1(stiff(1,:),stiff(k1+1,:),eps,'spline');
-        T = interp1(stiff(1,:),stiff(k1+1,:),eps,'linear','extrap');
-        if T < 0 %afinal nao é uma mola
-            T = 0;
-        end
-        sgm(k1) = T/(lines(2,k1)^2*pi/4); %acho que não é utilizado no programa
-        %         sgm(k1) = lines(2,k1)*eps;
-        %         T = sgm(k1)*lines(3,k1)^2*pi/4;
+    if dist_fa < min(l)
+        T_line = 0;
+    elseif dist_fa >= max(l)
+        broke(k1) = 1;
+        T_line = max(T);
     else
-        sgm(k1) = 0;
-        T = 0;
+        T_line = interp1(l,T,dist_fa);
     end
-    % Rope force projections (ship 1)
-    Fx1 = -direc1(1)*T;
-    Fy1 = -direc1(2)*T;
-    Fz1 = -direc1(3)*T;
-    % Force in body fixed frame (ship 1)
-    F1 = Rth1\[Fx1;Fy1;Fz1];
     
-    % Moment(ship 1)
-    M1(1,1) = (lines(4,k1)*F1(3)-lines(5,k1)*F1(2));%faz produto vetorial para tirar momento mas eixos são ortogonais sin sempre 1.
-    M1(2,1) = (lines(5,k1)*F1(1)-lines(3,k1)*F1(3));
-    M1(3,1) = (lines(3,k1)*F1(2)-lines(4,k1)*F1(1));
-    tau_m1(:,k1) = [F1;M1];
-    % Rope force projections (ship 2)
-    Fx2 = direc1(1)*T;
-    Fy2 = direc1(2)*T;
-    Fz2 = direc1(3)*T;
-    % Force in body fixed frame (ship 2)
-    F2 = Rth2\[Fx2;Fy2;Fz2];
+    % Project line tension over X and Y directions (Earth-fixed frame)
+    Xk = T_line*(xa(k1)-xf)/dist_fa; 
+    Yk = T_line*(ya(k1)-yf)/dist_fa;
     
-    % Moment (ship 2)
-    M2(1,1) = (lines(7,k1)*F2(3)-lines(8,k1)*F2(2));
-    M2(2,1) = (lines(8,k1)*F2(1)-lines(6,k1)*F2(3));
-    M2(3,1) = (lines(6,k1)*F2(2)-lines(7,k1)*F2(1));
-    tau_m2(:,k1) = [F2;M2]; %um é força outro momento.
-    if mbl_exc ~= 1
-        mbl_exc = T > mbl; %aqui compara se rompeu ou não.
-    end
-    if swl_exc ~= 1
-        swl_exc = T > swl;
-    end
- %eles param de aparecer quando mbl_exc é um vetor de 4 linhas iguais a 1.   
-%  mbl_exc
-%  swl_exc
-
-
-% if( eta2(4)> 0)
-% eta1
-% end
-
-% if( mbl_exc==1 )
-% error ('estourou');
-% end
-  if( eta2(4)> 0.52) %30 graus
-error ('emborcando');
-% mbl_exc ;t; 
-  end
+    % Transform loads to body-fixed frame
+    Xk_bf(k1) = Xk*cos(psi) + Yk*sin(psi);
+    Yk_bf(k1) = Yk*cos(psi) - Xk*sin(psi);
+    
+    % Moment
+    Nk_bf(k1) = -Xk_bf(k1)*yf_bf(k1) + Yk_bf(k1)*xf_bf(k1);
 end
+
+Xmoor = sum(Xk_bf);
+Ymoor = sum(Yk_bf);
+Nmoor = sum(Nk_bf);
 
 

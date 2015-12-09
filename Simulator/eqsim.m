@@ -4,12 +4,15 @@ global ktime data variable
 global iwaves1st iwavesmd iwind icontrol_psv ihdsuction imemory icoupling icurr imooring
 
 %% General constants
-r2d = 180/pi;
-d2r = pi/180;
-rho_water = 1025; % Water density [kg/m^3]
-rho_air = 1.2;    % Density of air [kg/m^3]
-nu_water = 1e-6; % Water kinematic viscosity [m^2/s]
-g = 9.8; % Acceleration of gravity [m/s^2]
+rho_water = data.const.rho_water;
+rho_air = data.const.rho_air;
+nu_water = data.const.nu_water;
+g = data.const.g;
+
+d2r = pi/180;       % Conversion factor, degrees to radians [rad/deg]
+r2d = 180/pi;       % Conversion factor, radians to degrees [deg/rad]
+knt2ms = 0.5144;    % Conversion factor, knots to meters per second [m/knt.s]
+ms2knt = 1/knt2ms;  % Conversion factor, meters per second to knots [knt.s/m]
 
 %% Ships properties
 % Main dimensions
@@ -36,81 +39,54 @@ lL(2) = data.ship(2).lL;
 rg(:,2) = data.ship(2).rg;
 
 % Rigid body inertia matrices
-MRB1 = data.ship(1).MRB;
-MRB2 = data.ship(2).MRB;
+Mrb1 = data.ship(1).Mrb;
+Mrb2 = data.ship(2).Mrb;
 
 % Restoration matrices
-G1 = data.ship(1).G;
-G2 = data.ship(2).G;
+Ghd1 = data.ship(1).Ghd;
+Ghd2 = data.ship(2).Ghd;
 
 
 %% State vector
 ypos = 0; % Current index of y vector
-
-eta = y(1:12,1); % Positions
-nu = y(13:24,1); % Velocities
-eta1 = eta(1:6); % Vessel 1 (FPSO) positions
-eta2 = eta(7:12); % Vessel 2 (PSV) positions
-nu1 = nu(1:6);  % Vessel 1 (FPSO) velocities
-nu2 = nu(7:12); % Vessel 2 (PSV) velocities
-
-ypos = ypos + 24; % Update ypos
-
-
-y_m=[eta2(1); eta2(2); eta2(6)];
-
-variable.eta_hat(:,ktime) = [0;0;0;0;0;0;eta_hat(1,1);eta_hat(2,1);0;0;0;eta_hat(3,1)];
-variable.nu_hat(:,ktime) = [0;0;0;0;0;0;nu_hat(1,1);nu_hat(2,1);0;0;0;nu_hat(3,1)];
-
-%% Convolution integral calculation for Cummins equation
-
-if imemory == 1
-    
-    % Evaluation of retardation functions and infinite added mass
-    
-    K11 = variable.K11;
-    K12 = variable.K12;
-    K21 = variable.K21;
-    K22 = variable.K22;
-    
-    Tij11=data.hydro.Tij11;
-    Tij12=data.hydro.Tij12;
-    Tij21=data.hydro.Tij21;
-    Tij22=data.hydro.Tij22;
-    
-    size_k = [size(K11,3) size(K12,3) size(K21,3) size(K22,3)];
-    size_k = max (size_k);
-    
-    K11 = zeros(6,6,size_k);
-    K12 = zeros(6,6,size_k);
-    K21 = zeros(6,6,size_k);
-    K22 = zeros(6,6,size_k);
-    
-    
-    K11(:,:,1:size(variable.K11,3)) = variable.K11(:,:,1:size(variable.K11,3));
-    K12(:,:,1:size(variable.K12,3)) = variable.K12(:,:,1:size(variable.K12,3));
-    K21(:,:,1:size(variable.K21,3)) = variable.K21(:,:,1:size(variable.K21,3));
-    K22(:,:,1:size(variable.K22,3)) = variable.K22(:,:,1:size(variable.K22,3));
-    
-    
-    K=[K11 K12 ; K21 K22];
-    
-    Tij_max = [Tij11 Tij12 ; Tij21 Tij22];
-    Tij_max = Tij_max';
-    
-    Tij_max = max(Tij_max);
-    
-    [mu] = convolution_integral(K,Tij_max,ktime,nu,t,newdt);
+if idof == 1
+    ndof = 6;
+elseif idof == 2
+    ndof = 3;
 end
 
+eta = y(1:2*ndof,1); % Positions
+nu = y(2*ndof+1:4*ndof,1); % Velocities
+eta1 = eta(1:ndof); % Vessel 1 (FPSO) positions
+eta2 = eta(ndof+1:2*ndof); % Vessel 2 (PSV) positions
+nu1 = nu(1:ndof);  % Vessel 1 (FPSO) velocities
+nu2 = nu(ndof+1:2*ndof); % Vessel 2 (PSV) velocities
+
+ypos = ypos + 4*ndof; % Update ypos
 
 %% FPSO mooring system
 
 if imooring == 1
+    load moor_coord.txt % File with anchors and fairlead coordinates
+    load moor_lxT.txt % File with horizontal distance vs. line tensions
     
-    [Xkrtot,Ykrtot,Nktot]=amarras(eta1(1),eta1(2),eta1(6),Lpp(1),B(1));
+    % Vector with current CG horizontal position
+    if idof == 1
+        eta_hor = [eta1(1);eta1(2);eta1(6)];
+    elseif idof == 2
+        eta_hor = [eta1(1);eta1(2);eta1(3)];
+    end
+    [Xmoor,Ymoor,Nmoor,broke] = mooring(moor_coord,moor_lxT,eta_hor);
+        
+    tau_moor = [Xmoor;Ymoor;Nmoor]; % Vector with mooring loads
     
-    tau_amarras=[Xkrtot;Ykrtot;0;0;0;Nktot;0;0;0;0;0;0]; %forca e momento nos 6 graus de liberdade de uma unica embarcacao.
+    if sum(broke) > 0
+        lines_brk = 1:length(broke);
+        lines_brk = lines_brk(broke==1);
+        warning_msg = ['Broken lines (' num2str(lines_brk) ')'];
+        warning(warning_msg);
+    end
+        
     
     variable.tau_amarras(:,ktime) = tau_amarras;
     
@@ -271,22 +247,27 @@ for k1 = 1:2
     
     %% Control
     if icontrol_psv == 1
-    % PSV control parameters
-eta_hat(1,1) = y(ypos+1,1);
-eta_hat(2,1) = y(ypos+2,1);
-eta_hat(3,1) = y(ypos+3,1);
-nu_hat(1,1) = y(ypos+4,1);
-nu_hat(2,1) = y(ypos+5,1);
-nu_hat(3,1) = y(ypos+6,1);
-ksi_hat(1,1) = y(ypos+7,1);
-ksi_hat(2,1) = y(ypos+8,1);
-ksi_hat(3,1) = y(ypos+9,1);
-ksi_hat(4,1) = y(ypos+10,1);
-ksi_hat(5,1) = y(ypos+11,1);
-ksi_hat(6,1) = y(ypos+12,1);
-b_hat(1,1) = y(ypos+13,1);
-b_hat(2,1) = y(ypos+14,1);
-b_hat(3,1) = y(ypos+15,1);
+        
+        y_m=[eta2(1); eta2(2); eta2(6)];
+        variable.eta_hat(:,ktime) = [0;0;0;0;0;0;eta_hat(1,1);eta_hat(2,1);0;0;0;eta_hat(3,1)];
+        variable.nu_hat(:,ktime) = [0;0;0;0;0;0;nu_hat(1,1);nu_hat(2,1);0;0;0;nu_hat(3,1)];
+        
+        % PSV control parameters
+        eta_hat(1,1) = y(ypos+1,1);
+        eta_hat(2,1) = y(ypos+2,1);
+        eta_hat(3,1) = y(ypos+3,1);
+        nu_hat(1,1) = y(ypos+4,1);
+        nu_hat(2,1) = y(ypos+5,1);
+        nu_hat(3,1) = y(ypos+6,1);
+        ksi_hat(1,1) = y(ypos+7,1);
+        ksi_hat(2,1) = y(ypos+8,1);
+        ksi_hat(3,1) = y(ypos+9,1);
+        ksi_hat(4,1) = y(ypos+10,1);
+        ksi_hat(5,1) = y(ypos+11,1);
+        ksi_hat(6,1) = y(ypos+12,1);
+        b_hat(1,1) = y(ypos+13,1);
+        b_hat(2,1) = y(ypos+14,1);
+        b_hat(3,1) = y(ypos+15,1);
         variable.ship(2).eta(:,1) = y(7:12,1);
         
         eta_ref=[data.ship(2).control.xref; data.ship(2).control.yref;data.ship(2).control.psiref];
@@ -410,6 +391,46 @@ GAMMA = [zeros(3) eye(3)];
 
 
 %% Equations of motions
+
+if isimtype == 1
+    % Convolution integral calculation for Cummins equation
+    
+    % Evaluation of retardation functions and infinite added mass
+    
+    K11 = variable.K11;
+    K12 = variable.K12;
+    K21 = variable.K21;
+    K22 = variable.K22;
+    
+    Tij11=data.hydro.Tij11;
+    Tij12=data.hydro.Tij12;
+    Tij21=data.hydro.Tij21;
+    Tij22=data.hydro.Tij22;
+    
+    size_k = [size(K11,3) size(K12,3) size(K21,3) size(K22,3)];
+    size_k = max (size_k);
+    
+    K11 = zeros(6,6,size_k);
+    K12 = zeros(6,6,size_k);
+    K21 = zeros(6,6,size_k);
+    K22 = zeros(6,6,size_k);
+    
+    
+    K11(:,:,1:size(variable.K11,3)) = variable.K11(:,:,1:size(variable.K11,3));
+    K12(:,:,1:size(variable.K12,3)) = variable.K12(:,:,1:size(variable.K12,3));
+    K21(:,:,1:size(variable.K21,3)) = variable.K21(:,:,1:size(variable.K21,3));
+    K22(:,:,1:size(variable.K22,3)) = variable.K22(:,:,1:size(variable.K22,3));
+    
+    
+    K=[K11 K12 ; K21 K22];
+    
+    Tij_max = [Tij11 Tij12 ; Tij21 Tij22];
+    Tij_max = Tij_max';
+    
+    Tij_max = max(Tij_max);
+    
+    [mu] = convolution_integral(K,Tij_max,ktime,nu,t,newdt);
+end
 
 tau_b_hat=[0;0;0;0;0;0;b_hat_movel(1,1);b_hat_movel(2,1);0;0; 0; b_hat_movel(3,1)];
 
