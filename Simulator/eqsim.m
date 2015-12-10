@@ -91,39 +91,38 @@ if imooring == 1
     variable.tau_amarras(:,ktime) = tau_amarras;
     
 else
-    tau_amarras = zeros(12,1);
-    
+    tau_amarras = zeros(ndof*2,1);    
 end
 
 %% Particular loads
-tau_waves1st = zeros(12,1);
-tau_wavesmd = zeros(12,1);
-tau_wind = zeros(12,1);
-tau_curr = zeros(12,1);
-tau_ctr = zeros(12,1);
-tau_hdsuction = zeros(12,1);
+tau_waves1st = zeros(ndof*2,1);
+tau_wavesmd = zeros(ndof*2,1);
+tau_wind = zeros(ndof*2,1);
+tau_curr = zeros(ndof*2,1);
+tau_ctr = zeros(ndof*2,1);
+tau_hdsuction = zeros(ndof*2,1);
 for k1 = 1:2
     
-    u = nu(1+(k1-1)*6,1);
-    v = nu(2+(k1-1)*6,1);
-    psi = eta(6+(k1-1)*6,1);
+    u = nu(1+(k1-1)*ndof,1);
+    v = nu(2+(k1-1)*ndof,1);
+    psi = eta(ndof+(k1-1)*ndof,1);
     
     % Waves - 1st order
     if iwaves1st == 1
         betaw = d2r*data.environment.betaw;
-        betaFTF = data.ship(k1).waveincid;
+        betaw1st = data.ship(k1).waves_incid;
         Fwf = data.ship(k1).Fwf;
         beta = 180/pi*norm02pi(betaw-psi); % wave incidence direction [deg]
-        for k2 = 1:6
-            if (k2 == 1) && (t >= 2.6)
-                debug = 1;
-            end
-            tau_waves1st(k2+6*(k1-1),1) = interp1(betaFTF,Fwf(ktime,:,k2),beta,'linear','extrap');
+        for k2 = 1:ndof
+%            if (k2 == 1) && (t >= 2.6)
+%                debug = 1;
+%            end
+            tau_waves1st(k2+ndof*(k1-1),1) = interp1(betaFTF,Fwf(ktime,:,k2),beta,'linear','extrap');
         end
     end
-    variable.ship(k1).waves1st(:,ktime) = tau_waves1st(1+(k1-1)*6:6+(k1-1)*6);
+    variable.ship(k1).waves1st(:,ktime) = tau_waves1st(1+(k1-1)*ndof:ndof+(k1-1)*ndof);
     
-    %Waves - mean drift
+    % Waves - mean drift
     if iwavesmd == 1
         u_md = variable.ship(k1).u_md;
         v_md = variable.ship(k1).v_md;
@@ -140,28 +139,27 @@ for k1 = 1:2
         end
         if variable.ship(k1).calc_mdrift == 1
             betaw = d2r*data.environment.betaw;
-            betaWMD = data.ship(k1).waveincid; %1)olhar tamanho 2) fazero caminho17 vetor
+            betaWMD = data.ship(k1).waves_incid;
             Fmd = data.ship(k1).Fmd;
             beta = 180/pi*norm02pi(betaw-psi); % wave incidence direction [deg]
             if beta <= 180
-                tau_wavesmd(1+6*(k1-1),1) = interp1(betaWMD,Fmd(:,1),beta,'linear');
-                tau_wavesmd(2+6*(k1-1),1) = interp1(betaWMD,Fmd(:,2),beta,'linear');
-                tau_wavesmd(6+6*(k1-1),1) = interp1(betaWMD,Fmd(:,3),beta,'linear');
+                tau_wavesmd(1+ndof*(k1-1),1) = interp1(betaWMD,Fmd(:,1),beta,'linear');
+                tau_wavesmd(2+ndof*(k1-1),1) = interp1(betaWMD,Fmd(:,2),beta,'linear');
+                tau_wavesmd(ndof+ndof*(k1-1),1) = interp1(betaWMD,Fmd(:,3),beta,'linear');
             else
-                tau_wavesmd(1+6*(k1-1),1) = interp1(betaWMD,Fmd(:,1),beta,'linear'); %arquivo data.ship(k1).waveincid;360 -> data.ship(k1).waveincid;360 - betaWMD
-                tau_wavesmd(2+6*(k1-1),1) = -interp1(betaWMD,Fmd(:,2),beta,'linear');
-                tau_wavesmd(6+6*(k1-1),1) = -interp1(betaWMD,Fmd(:,3),beta,'linear');
+                tau_wavesmd(1+ndof*(k1-1),1) = interp1(betaWMD,Fmd(:,1),beta,'linear'); %arquivo data.ship(k1).waveincid;360 -> data.ship(k1).waveincid;360 - betaWMD
+                tau_wavesmd(2+ndof*(k1-1),1) = -interp1(betaWMD,Fmd(:,2),beta,'linear');
+                tau_wavesmd(ndof+ndof*(k1-1),1) = -interp1(betaWMD,Fmd(:,3),beta,'linear');
             end
             variable.ship(k1).lastktime_md = ktime;
         else
             lastktime_md = variable.ship(k1).lastktime_md;
-            tau_wavesmd(1+6*(k1-1):6*k1,1) = variable.ship(k1).tau_wavesmd(:,lastktime_md);
+            tau_wavesmd(1+ndof*(k1-1):ndof*k1,1) = variable.ship(k1).tau_wavesmd(:,lastktime_md);
         end
     else
-        tau_wavesmd = zeros(12,1);
+        tau_wavesmd = zeros(2*ndof,1);
     end
-    variable.ship(k1).tau_wavesmd(:,ktime) = tau_wavesmd(1+6*(k1-1):6*k1,1);
-    
+    variable.ship(k1).tau_wavesmd(:,ktime) = tau_wavesmd(1+ndof*(k1-1):ndof*k1,1);    
     
     % Wind
     if iwind == 1
@@ -202,9 +200,9 @@ for k1 = 1:2
             end
             Uw_r = sqrt(uw^2+vw^2); % wind velocity related to the ship hull
             [Xwind,Ywind,Nwind] = ocimf77(coefwind,r2d*gamma,rho_air,Uw_r,At,Al,Lpp(k1),bow,load);    % wind forces and moment [N, N, Nm]
-            tau_wind(1+6*(k1-1),1) = Xwind;
-            tau_wind(2+6*(k1-1),1) = Ywind;
-            tau_wind(6+6*(k1-1),1) = Nwind;
+            tau_wind(1+ndof*(k1-1),1) = Xwind;
+            tau_wind(2+ndof*(k1-1),1) = Ywind;
+            tau_wind(ndof+ndof*(k1-1),1) = Nwind;
             variable.ship(k1).lastktime_wn = ktime;
         else
             lastktime_wn = variable.ship(k1).lastktime_wn;
@@ -212,8 +210,6 @@ for k1 = 1:2
         end
     end
     variable.ship(k1).tau_wind(:,ktime) = tau_wind;
-    
-    
     
     % Current
     if icurr == 1
@@ -223,10 +219,10 @@ for k1 = 1:2
         Uc = data.environment.Uc;
         ur = u - Uc*cos(alpha);
         vr = v - Uc*sin(alpha);
-        [Xcurr,Ycurr,Ncurr] = current(Lpp(k1),B(k1),T(k1),S(k1),Cb(k1),Cy(k1),lL(k1),ur,vr,nu(6+(k1-1)*6));
-        tau_curr(1+6*(k1-1),1) = Xcurr;
-        tau_curr(2+6*(k1-1),1) = Ycurr;
-        tau_curr(6+6*(k1-1),1) = Ncurr;
+        [Xcurr,Ycurr,Ncurr] = current(Lpp(k1),B(k1),T(k1),S(k1),Cb(k1),Cy(k1),lL(k1),ur,vr,nu(ndof+(k1-1)*ndof));
+        tau_curr(1+ndof*(k1-1),1) = Xcurr;
+        tau_curr(2+ndof*(k1-1),1) = Ycurr;
+        tau_curr(ndof+ndof*(k1-1),1) = Ncurr;
         %     else
         %         alphac = d2r*data.environment.alphac;
         %         alpha = norm02pi(alphac-psi);   % incidence direction, normalized between 0 and 2*pi [rad]
@@ -234,9 +230,9 @@ for k1 = 1:2
         %
         %
         %         [Xcurr,Ycurr,Ncurr] = correnteza_ipt(Lpp(k1),T(k1),Uc,alphac,rho_water);
-        %         tau_curr(1+6*(k1-1),1) = Xcurr;
-        %         tau_curr(2+6*(k1-1),1) = Ycurr;
-        %         tau_curr(6+6*(k1-1),1) = Ncurr;
+        %         tau_curr(1+ndof*(k1-1),1) = Xcurr;
+        %         tau_curr(2+ndof*(k1-1),1) = Ycurr;
+        %         tau_curr(ndof+ndof*(k1-1),1) = Ncurr;
         %
         %     end
         
@@ -248,7 +244,7 @@ for k1 = 1:2
     %% Control
     if icontrol_psv == 1
         
-        y_m=[eta2(1); eta2(2); eta2(6)];
+        y_m=[eta2(1); eta2(2); eta2(ndof)];
         variable.eta_hat(:,ktime) = [0;0;0;0;0;0;eta_hat(1,1);eta_hat(2,1);0;0;0;eta_hat(3,1)];
         variable.nu_hat(:,ktime) = [0;0;0;0;0;0;nu_hat(1,1);nu_hat(2,1);0;0;0;nu_hat(3,1)];
         
@@ -268,17 +264,17 @@ for k1 = 1:2
         b_hat(1,1) = y(ypos+13,1);
         b_hat(2,1) = y(ypos+14,1);
         b_hat(3,1) = y(ypos+15,1);
-        variable.ship(2).eta(:,1) = y(7:12,1);
+        variable.ship(2).eta(:,1) = y(ndof+1:2*ndof,1);
         
-        eta_ref=[data.ship(2).control.xref; data.ship(2).control.yref;data.ship(2).control.psiref];
-        nu_ref=[0;0;0];
+        eta_ref = [data.ship(2).control.xref; data.ship(2).control.yref;data.ship(2).control.psiref];
+        nu_ref = [0;0;0];
         
         eta_error= eta_ref-eta_hat;
         nu_error=nu_ref-nu_hat;
         integra_eta_error=[y(neq1+neq2-2,1);y(neq1+neq2-1,1);y(neq1+neq2,1)];
         
         
-        psi=eta2(6,1);
+        psi = eta2(ndof,1);
         Jpsi = [cos(psi) -sin(psi) 0;sin(psi) cos(psi) 0;0 0 1];% rotation matrix helio
         
         
@@ -319,43 +315,14 @@ for k1 = 1:2
         Jpsi = [cos(psi) -sin(psi) 0;sin(psi) cos(psi) 0;0 0 1];
         b_hat_movel=inv(Jpsi)*b_hat;
         tau_cont=[0;0;0];
-        tau_ctr(7:12,1) = [tau_cont(1,1);tau_cont(2,1);0;0;0;tau_cont(3,1)];
+        tau_ctr(ndof+1:2*ndof,1) = [tau_cont(1,1);tau_cont(2,1);zeros(ndof-3,1);tau_cont(3,1)];
         tau_cont_aux=[0;0;0];
         tau_cont_aux_Kp=[0;0;0];
         tau_cont_aux_Kd=[0;0;0];
-    end
+    end    
     
-    
-    %% Suction interaction loads
-    
-    
-    %CARLOS - FORMULACAO UTILIZANDO VANTORRE
-    
-    if ihdsuction == 1
+  
         
-        alphac = d2r*data.environment.alphac;
-        alpha = norm02pi(alphac-psi);   % incidence direction, normalized between 0 and 2*pi [rad]
-        Uc = data.environment.Uc;
-        
-        if k1 == 1
-            xcc = (eta1(1)-eta2(1))*cos(eta1(6)) + (eta1(2)-eta2(2))*sin(eta1(6));
-            ksi = xcc/(0.5*(Lpp(1)+Lpp(2)));
-            
-            U1 = nu(1) - Uc*cos(norm02pi(alphac - eta(6,1)));
-            U2 = nu(7) - Uc*cos(norm02pi(alphac - eta(12,1)));
-            
-            [Xh,Yh,Nh] = hydrint_vantorre01(ksi,rho_water,Lpp(1),B(1),T(1),U1,U2);
-            tau_hdsuction(1:6,1) = [0;Yh;0;0;0;Nh];
-        elseif k1 == 2
-            [Xh,Yh,Nh] = hydrint_vantorre01(ksi,rho_water,Lpp(2),B(2),T(2),U1,U2);
-            Yh = -Yh;
-            Nh = -Nh;
-            tau_hdsuction(7:12,1) = [0;Yh;0;0;0;Nh];
-        end
-    end
-    variable.ship(1).tau_hdsuction(:,ktime) = tau_hdsuction(1:6,1);
-    variable.ship(2).tau_hdsuction(:,ktime) = tau_hdsuction(7:12,1); %tau_hdsuction
-    
 end
 nn = nn + 1;
 
@@ -397,35 +364,27 @@ if isimtype == 1
     
     % Evaluation of retardation functions and infinite added mass
     
-    K11 = variable.K11;
-    K12 = variable.K12;
-    K21 = variable.K21;
-    K22 = variable.K22;
+    % REVER EFICIENCIA (pre-declarar no main ou simdata, ou mudar inp. generator)!!!
+    % DECLARAR K'S ANTES!
+    for k1 = 1:6
+        for k2 = 1:6
+            K11(k1,k2,:) = data.hydro.K11(k1,k2).K;
+            K12(k1,k2,:) = data.hydro.K12(k1,k2).K;
+            K21(k1,k2,:) = data.hydro.K21(k1,k2).K;
+            K22(k1,k2,:) = data.hydro.K22(k1,k2).K;
+            T11(k1k,k2) = data.hydro.K11(k1,k2).T;
+            T12(k1k,k2) = data.hydro.K12(k1,k2).T;
+            T21(k1k,k2) = data.hydro.K21(k1,k2).T;
+            T22(k1k,k2) = data.hydro.K22(k1,k2).T;
+        end
+    end
     
-    Tij11=data.hydro.Tij11;
-    Tij12=data.hydro.Tij12;
-    Tij21=data.hydro.Tij21;
-    Tij22=data.hydro.Tij22;
+
+    K=[K11 K12; K21 K22];
     
-    size_k = [size(K11,3) size(K12,3) size(K21,3) size(K22,3)];
-    size_k = max (size_k);
-    
-    K11 = zeros(6,6,size_k);
-    K12 = zeros(6,6,size_k);
-    K21 = zeros(6,6,size_k);
-    K22 = zeros(6,6,size_k);
-    
-    
-    K11(:,:,1:size(variable.K11,3)) = variable.K11(:,:,1:size(variable.K11,3));
-    K12(:,:,1:size(variable.K12,3)) = variable.K12(:,:,1:size(variable.K12,3));
-    K21(:,:,1:size(variable.K21,3)) = variable.K21(:,:,1:size(variable.K21,3));
-    K22(:,:,1:size(variable.K22,3)) = variable.K22(:,:,1:size(variable.K22,3));
-    
-    
-    K=[K11 K12 ; K21 K22];
-    
-    Tij_max = [Tij11 Tij12 ; Tij21 Tij22];
-    Tij_max = Tij_max';
+    % REVER ISTO:
+    T_max = [T11 T12; T21 T22];
+    T_max = Tij_max';
     
     Tij_max = max(Tij_max);
     
