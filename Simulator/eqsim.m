@@ -1,18 +1,35 @@
-function [dy,y,nsys,nn] = eqsim(y,t,newdt,nn)
+function [dy,y,nsys] = eqsim(y,t,newdt)
 
-global ktime data variable
-global iwaves1st iwavesmd iwind icontrol_psv ihdsuction imemory icoupling icurr imooring
+global ktime data variable flag
+
+% Read flags
+isimtype = flag.isimtype;
+idof =  flag.idof;
+iwaves1st = flag.iwaves1st;
+iwavesmd = flag.iwavesmd;
+iwind = flag.iwind;
+icurr = flag.icurr;
+icontrol_psv = flag.icontrol_psv;
+ihdsuction = flag.ihdsuction;
+imooring = flag.imooring;
 
 %% General constants
-rho_water = data.const.rho_water;
-rho_air = data.const.rho_air;
-nu_water = data.const.nu_water;
-g = data.const.g;
+rho_water = data.constants.rho_water;
+rho_air = data.constants.rho_air;
+nu_water = data.constants.nu_water;
+g = data.constants.g;
 
 d2r = pi/180;       % Conversion factor, degrees to radians [rad/deg]
 r2d = 180/pi;       % Conversion factor, radians to degrees [deg/rad]
 knt2ms = 0.5144;    % Conversion factor, knots to meters per second [m/knt.s]
 ms2knt = 1/knt2ms;  % Conversion factor, meters per second to knots [knt.s/m]
+
+% Number of degrees of freedom
+if idof == 1
+    ndof = 6;
+elseif idof == 2
+    ndof = 3;
+end
 
 %% Ships properties
 % Main dimensions
@@ -77,7 +94,7 @@ if imooring == 1
         eta_hor = [eta1(1);eta1(2);eta1(3)];
     end
     [Xmoor,Ymoor,Nmoor,broke] = mooring(moor_coord,moor_lxT,eta_hor);
-        
+    
     tau_moor = [Xmoor;Ymoor;Nmoor]; % Vector with mooring loads
     
     if sum(broke) > 0
@@ -86,12 +103,12 @@ if imooring == 1
         warning_msg = ['Broken lines (' num2str(lines_brk) ')'];
         warning(warning_msg);
     end
-        
     
-    variable.tau_amarras(:,ktime) = tau_amarras;
+    
+    variable.tau_moor(:,ktime) = tau_moor;
     
 else
-    tau_amarras = zeros(ndof*2,1);    
+    tau_moor = zeros(ndof*2,1);
 end
 
 %% Particular loads
@@ -114,10 +131,10 @@ for k1 = 1:2
         Fwf = data.ship(k1).Fwf;
         beta = 180/pi*norm02pi(betaw-psi); % wave incidence direction [deg]
         for k2 = 1:ndof
-%            if (k2 == 1) && (t >= 2.6)
-%                debug = 1;
-%            end
-            tau_waves1st(k2+ndof*(k1-1),1) = interp1(betaFTF,Fwf(ktime,:,k2),beta,'linear','extrap');
+            %            if (k2 == 1) && (t >= 2.6)
+            %                debug = 1;
+            %            end
+            tau_waves1st(k2+ndof*(k1-1),1) = interp1(betaw1st,Fwf(ktime,:,k2),beta,'linear','extrap');
         end
     end
     variable.ship(k1).waves1st(:,ktime) = tau_waves1st(1+(k1-1)*ndof:ndof+(k1-1)*ndof);
@@ -159,7 +176,7 @@ for k1 = 1:2
     else
         tau_wavesmd = zeros(2*ndof,1);
     end
-    variable.ship(k1).tau_wavesmd(:,ktime) = tau_wavesmd(1+ndof*(k1-1):ndof*k1,1);    
+    variable.ship(k1).tau_wavesmd(:,ktime) = tau_wavesmd(1+ndof*(k1-1):ndof*k1,1);
     
     % Wind
     if iwind == 1
@@ -178,7 +195,7 @@ for k1 = 1:2
         end
         if variable.ship(k1).calc_wind == 1
             bow = data.ship(k1).bow;
-            load = data.ship(k1).load;
+            load_cond = data.ship(k1).load;
             At = data.ship(k1).At;
             Al = data.ship(k1).Al;
             coefwind = data.environment.coefwind;
@@ -199,7 +216,7 @@ for k1 = 1:2
                 gamma = 2*pi + gamma;
             end
             Uw_r = sqrt(uw^2+vw^2); % wind velocity related to the ship hull
-            [Xwind,Ywind,Nwind] = ocimf77(coefwind,r2d*gamma,rho_air,Uw_r,At,Al,Lpp(k1),bow,load);    % wind forces and moment [N, N, Nm]
+            [Xwind,Ywind,Nwind] = ocimf77(coefwind,r2d*gamma,rho_air,Uw_r,At,Al,Lpp(k1),bow,load_cond);    % wind forces and moment [N, N, Nm]
             tau_wind(1+ndof*(k1-1),1) = Xwind;
             tau_wind(2+ndof*(k1-1),1) = Ywind;
             tau_wind(ndof+ndof*(k1-1),1) = Nwind;
@@ -266,6 +283,35 @@ for k1 = 1:2
         b_hat(3,1) = y(ypos+15,1);
         variable.ship(2).eta(:,1) = y(ndof+1:2*ndof,1);
         
+        % PSV observer parameters
+        zetanotch1 = 1; zetanotch2 = 1; zetanotch3 = 1;
+        zeta1 = 0.1; zeta2 = 0.1; zeta3 = 0.1;
+        
+        Tpf1=9.0;%9.5;
+        Tpf2=9.0;
+        Tpf3=9.0; %10%10.5;%9.5%10.5;
+        Tb=diag([500,500,500]);
+        
+        w01 = 2*pi/(Tpf1); w02 = 2*pi/(Tpf2); w03 = 2*pi/(Tpf3);
+        wc1 = 1.1*w01; wc2 = 1.1*w02; wc3 = 1.1*w03;%1.1*w03;
+        
+        %equacoes (4.23 a 4.26)
+        Ka1(1,1) = -2*(zetanotch1-zeta1)*wc1/w01;
+        Ka1(2,2) = -2*(zetanotch2-zeta2)*wc2/w02;
+        Ka1(3,3) = -2*(zetanotch3-zeta3)*wc3/w03;
+        Ka1(4,1) = 2*(zetanotch1-zeta1)*w01;
+        Ka1(5,2) = 2*(zetanotch2-zeta2)*w02;
+        Ka1(6,3) = 2*(zetanotch3-zeta3)*w03;
+        Ka2(1,1) = wc1;
+        Ka2(2,2) = wc2;
+        Ka2(3,3) = wc3;
+        Ka3=1e5*[1 0 0; 0 1 0; 0 0 1e4];%*1e3;
+        Ka4=Ka3*100;
+        
+        OMEGA21 = -diag([w01^2;w02^2;w03^2]); OMEGA22 = -diag([2*zeta1*w01;2*zeta2*w02;2*zeta3*w03]);
+        OMEGA = [zeros(3) eye(3);OMEGA21 OMEGA22];
+        GAMMA = [zeros(3) eye(3)];
+        
         eta_ref = [data.ship(2).control.xref; data.ship(2).control.yref;data.ship(2).control.psiref];
         nu_ref = [0;0;0];
         
@@ -275,7 +321,7 @@ for k1 = 1:2
         
         
         psi = eta2(ndof,1);
-        Jpsi = [cos(psi) -sin(psi) 0;sin(psi) cos(psi) 0;0 0 1];% rotation matrix helio
+        Jpsi = [cos(psi) -sin(psi) 0;sin(psi) cos(psi) 0;0 0 1];
         
         
         Kp_psv_x = data.ship(2).control.Kp_x;
@@ -308,53 +354,40 @@ for k1 = 1:2
         % Control vector
         tau_ctr(7:12,1) = [tau_cont(1,1);tau_cont(2,1);0;0;0;tau_cont(3,1)];
         
-    else
-        eta_error= [0;0;0];
-        nu_error=[0;0;0];
-        integra_eta_error=[0;0;0];
-        Jpsi = [cos(psi) -sin(psi) 0;sin(psi) cos(psi) 0;0 0 1];
-        b_hat_movel=inv(Jpsi)*b_hat;
-        tau_cont=[0;0;0];
-        tau_ctr(ndof+1:2*ndof,1) = [tau_cont(1,1);tau_cont(2,1);zeros(ndof-3,1);tau_cont(3,1)];
-        tau_cont_aux=[0;0;0];
-        tau_cont_aux_Kp=[0;0;0];
-        tau_cont_aux_Kd=[0;0;0];
-    end    
-    
-  
+        tau_b_hat=[0;0;0;0;0;0;b_hat_movel(1,1);b_hat_movel(2,1);0;0; 0; b_hat_movel(3,1)];
         
+        variable.tau_ctr(:,ktime) = tau_ctr;
+        variable.tau_b_hat_psv(:,ktime)=tau_b_hat;
+        variable.tau_ext(:,ktime)=tau_ext;
+        variable.tau_cont_aux(:,ktime)=tau_cont_aux;
+        variable.tau_cont_aux_Kp(:,ktime)=tau_cont_aux_Kp;
+        variable.tau_cont_aux_Kd(:,ktime)=tau_cont_aux_Kd;
+        
+        
+        psi=eta2(6);
+        Jpsi = [cos(psi) -sin(psi) 0;sin(psi) cos(psi) 0;0 0 1];% rotation matrix helio
+        
+        tau_ctr_alt=[tau_ctr(7);tau_ctr(8);tau_ctr(12)]; %matriz criada que deve ser 3x1
+        MRB2_alt=[MRB2(1,1)*1.1,MRB2(1,2),MRB2(1,6);MRB2(2,1),MRB2(2,2)*1.9,MRB2(2,6);MRB2(6,1),MRB2(6,2),MRB2(6,6)*1.2];%colocando massas adicionais em x, y e psi
+        
+        [etap_hat,nup_hat,ksip_hat,bp_hat,eps] = nonl_observer(y_m,Jpsi,eta_hat,nu_hat,ksi_hat,b_hat,MRB2_alt,D,tau_ctr_alt,OMEGA,GAMMA,Ka1,Ka2,Ka3,Ka4,Tb,t);
+        
+    else
+        %         eta_error= [0;0;0];
+        %         nu_error=[0;0;0];
+        %         integra_eta_error=[0;0;0];
+        %         Jpsi = [cos(psi) -sin(psi) 0;sin(psi) cos(psi) 0;0 0 1];
+        %         b_hat_movel=inv(Jpsi)*b_hat;
+        %         tau_cont=[0;0;0];
+        %         tau_ctr(ndof+1:2*ndof,1) = [tau_cont(1,1);tau_cont(2,1);zeros(ndof-3,1);tau_cont(3,1)];
+        %         tau_cont_aux=[0;0;0];
+        %         tau_cont_aux_Kp=[0;0;0];
+        %         tau_cont_aux_Kd=[0;0;0];
+    end
+    
+    
+    
 end
-nn = nn + 1;
-
-%% Observer parameters
-zetanotch1 = 1; zetanotch2 = 1; zetanotch3 = 1;
-zeta1 = 0.1; zeta2 = 0.1; zeta3 = 0.1;
-
-Tpf1=9.0;%9.5;
-Tpf2=9.0;
-Tpf3=9.0; %10%10.5;%9.5%10.5;
-Tb=diag([500,500,500]);
-
-w01 = 2*pi/(Tpf1); w02 = 2*pi/(Tpf2); w03 = 2*pi/(Tpf3);
-wc1 = 1.1*w01; wc2 = 1.1*w02; wc3 = 1.1*w03;%1.1*w03;
-
-%equacoes (4.23 a 4.26)
-Ka1(1,1) = -2*(zetanotch1-zeta1)*wc1/w01;
-Ka1(2,2) = -2*(zetanotch2-zeta2)*wc2/w02;
-Ka1(3,3) = -2*(zetanotch3-zeta3)*wc3/w03;
-Ka1(4,1) = 2*(zetanotch1-zeta1)*w01;
-Ka1(5,2) = 2*(zetanotch2-zeta2)*w02;
-Ka1(6,3) = 2*(zetanotch3-zeta3)*w03;
-Ka2(1,1) = wc1;
-Ka2(2,2) = wc2;
-Ka2(3,3) = wc3;
-Ka3=1e5*[1 0 0; 0 1 0; 0 0 1e4];%*1e3;
-Ka4=Ka3*100;
-
-OMEGA21 = -diag([w01^2;w02^2;w03^2]); OMEGA22 = -diag([2*zeta1*w01;2*zeta2*w02;2*zeta3*w03]);
-OMEGA = [zeros(3) eye(3);OMEGA21 OMEGA22];
-GAMMA = [zeros(3) eye(3)];
-
 
 
 %% Equations of motions
@@ -362,103 +395,41 @@ GAMMA = [zeros(3) eye(3)];
 if isimtype == 1
     % Convolution integral calculation for Cummins equation
     
-    % Evaluation of retardation functions and infinite added mass
-    
-    % REVER EFICIENCIA (pre-declarar no main ou simdata, ou mudar inp. generator)!!!
-    % DECLARAR K'S ANTES!
-    for k1 = 1:6
-        for k2 = 1:6
-            K11(k1,k2,:) = data.hydro.K11(k1,k2).K;
-            K12(k1,k2,:) = data.hydro.K12(k1,k2).K;
-            K21(k1,k2,:) = data.hydro.K21(k1,k2).K;
-            K22(k1,k2,:) = data.hydro.K22(k1,k2).K;
-            T11(k1k,k2) = data.hydro.K11(k1,k2).T;
-            T12(k1k,k2) = data.hydro.K12(k1,k2).T;
-            T21(k1k,k2) = data.hydro.K21(k1,k2).T;
-            T22(k1k,k2) = data.hydro.K22(k1,k2).T;
-        end
+    % Read retardation functions from previously generated structure
+    K=[data.hydro.K11 data.hydro.K12; data.hydro.K21 data.hydro.K22];
+
+    if newdt == 1
+        nu_mem = [variable.ship(1).nu(:,1:ktime);variable.ship(2).nu(:,1:ktime)];
+        [mu] = convolution_integral(K,nu_mem,t,ktime);
+        variable.mu(:,ktime) = mu;
+    else
+        [mu] = variable.mu(:,ktime);
     end
     
-
-    K=[K11 K12; K21 K22];
+    A_inf = [data.hydro.A11_inf data.hydro.A12_inf;
+        data.hydro.A21_inf data.hydro.A22_inf];
     
-    % REVER ISTO:
-    T_max = [T11 T12; T21 T22];
-    T_max = Tij_max';
+    Mrb = [Mrb1 zeros(6,6);zeros(6,6) Mrb2];
+    Ghd = [Ghd1 zeros(6,6);zeros(6,6) Ghd2];
     
-    Tij_max = max(Tij_max);
+    tau_ext = tau_waves1st + tau_wavesmd + tau_wind + tau_curr + tau_hdsuction + tau_moor;
+    tau = tau_ext + tau_ctr;
+        
+    [etap,nup] = eqmot_cummins(eta,nu,rg(:,1),rg(:,2),Mrb,A_inf,Ghd,mu,tau);
     
-    [mu] = convolution_integral(K,Tij_max,ktime,nu,t,newdt);
+elseif isimtype == 2
+    error('LF + WF approach is not implemented!')
 end
 
-tau_b_hat=[0;0;0;0;0;0;b_hat_movel(1,1);b_hat_movel(2,1);0;0; 0; b_hat_movel(3,1)];
-
-tau_ext = tau_waves1st + tau_wavesmd + tau_wind + tau_curr + tau_hdsuction + tau_amarras;
-tau = tau_ext + tau_ctr;
-
-variable.tau_ctr(:,ktime) = tau_ctr;
-variable.tau_b_hat_psv(:,ktime)=tau_b_hat;
-variable.tau_ext(:,ktime)=tau_ext;
-variable.tau_cont_aux(:,ktime)=tau_cont_aux;
-variable.tau_cont_aux_Kp(:,ktime)=tau_cont_aux_Kp;
-variable.tau_cont_aux_Kd(:,ktime)=tau_cont_aux_Kd;
-
-
-psi=eta2(6);
-Jpsi = [cos(psi) -sin(psi) 0;sin(psi) cos(psi) 0;0 0 1];% rotation matrix helio
-
-tau_ctr_alt=[tau_ctr(7);tau_ctr(8);tau_ctr(12)]; %matriz criada que deve ser 3x1
-MRB2_alt=[MRB2(1,1)*1.1,MRB2(1,2),MRB2(1,6);MRB2(2,1),MRB2(2,2)*1.9,MRB2(2,6);MRB2(6,1),MRB2(6,2),MRB2(6,6)*1.2];%colocando massas adicionais em x, y e psi
-
-[etap_hat,nup_hat,ksip_hat,bp_hat,eps] = nonl_observer(y_m,Jpsi,eta_hat,nu_hat,ksi_hat,b_hat,MRB2_alt,D,tau_ctr_alt,OMEGA,GAMMA,Ka1,Ka2,Ka3,Ka4,Tb,t);
-
-MRB = [MRB1 zeros(6,6);zeros(6,6) MRB2];
-G = [G1 zeros(6,6);zeros(6,6) G2];
-
-% Aqui, trocar imemory por isimtype, eqmot_memory por eqmot_cummins e calcular o mu (Carlos, 08/12/15)
-if imemory ==1
-    Ainf = data.hydro.A_inf;
-    [etap,nup] = eqmot_memory(eta,nu,rg(:,1),rg(:,2),MRB,Ainf,G,mu,tau,newdt);
-else
-    A_fixfreq = [data.hydro.A11_fixfreq data.hydro.A12_fixfreq;data.hydro.A21_fixfreq data.hydro.A22_fixfreq]; %espa�o nova coluna e ; nova linha
-    B_fixfreq = [data.hydro.B11_fixfreq data.hydro.B12_fixfreq;data.hydro.B21_fixfreq data.hydro.B22_fixfreq];
-    nu_m = [0*5*0.5144;0;0;0;0;0;0*5*0.5144;0;0;0;0;0]; %foram zerados os primeiro e o s�timo termo pois eles s�o a vel. avan�o que queremos nula.
-    [etap,nup] = eqmot_fixfreq(eta,nu,nu_m,rg(:,1),rg(:,2),MRB,A_fixfreq,B_fixfreq,G,tau); %linha que foi zerada (manter zerada muito problem�tica)
-end
-
-variable.etap(:,ktime) = etap(:,1);
-variable.nu(:,ktime) = nu(:,1);
-dt=variable.dt;
-
-% if newdt==1
-% i=5;
-% figure(35)
-% t_plot= (1:size(variable.nu,2))*dt;
-% t_plot=t_plot';
-% % K_plot(:,1)= K(i,i,:);
-% plot(t_plot,variable.nu(i,1:length(t_plot)),'o-','LineWidth',2)
-% xlabel ('tempo')
-% ylabel (['variable.nu(' num2str(i) ',' num2str(i) ')'])
-% grid on
-% end
+variable.etap(:,ktime) = etap;
+variable.nup(:,ktime) = nup;
 
 nsys = size(y,1);
 dy = zeros(nsys,1);
-ypos = 0;
-
-dy(1:12,1) = etap;
-dy(13:24,1) = nup;
-
-ypos=24;
-for iandrey = 1:3
-    dy(ypos+iandrey,1)=etap_hat(iandrey);
-    dy(ypos+3+iandrey,1)=nup_hat(iandrey);
-    dy(ypos+6+iandrey,1)=ksip_hat(iandrey);
-    dy(ypos+9+iandrey,1)=ksip_hat(iandrey+3);
-    dy(ypos+12+iandrey,1)=bp_hat(iandrey);
-    dy(ypos+15+iandrey,1)=eta_error(iandrey);
-end
+dypos = 0;
+dy(1:2*ndof,1) = etap;
+dypos = dypos + 2*ndof;
+dy(dypos+1:2*dypos,1) = nup;
 
 
-ypos = neq1+neq2;  %ypos + 24+15 Helio
 

@@ -1,7 +1,6 @@
-function [t,y,nn]=hrkdif(y,dt,t,nn)
-nn=t;
+function [t,y]=hrkdif(y,dt,t)
 newdt=1;
-[dy,y,nsys,nn]=eqsim(y,t,newdt,nn); %1
+[dy,y,nsys]=eqsim(y,t,newdt); %1
 % nn
 newdt=0; %Só considera o primeiro eqsim
 h=dt/2;
@@ -17,14 +16,14 @@ end
 
 t=t+h;
 
-[dy,y,nsys,nn]=eqsim(y,t,newdt,nn); %2
+[dy,y,nsys]=eqsim(y,t,newdt); %2
 % nn
 for k1=1:nsys
 	y1(k1)=dy(k1);
 	y(k1)=sy(k1)+h*dy(k1);
 end
 
-[dy,y,nsys,nn]=eqsim(y,t,newdt,nn); %3
+[dy,y,nsys]=eqsim(y,t,newdt); %3
 % nn
 for k1=1:nsys
 	y2(k1)=dy(k1);
@@ -33,7 +32,7 @@ end;
 
 t=t+h;
 
-[dy,y,nsys,nn]=eqsim(y,t,newdt,nn); %4
+[dy,y,nsys]=eqsim(y,t,newdt); %4
 % nn
 h=h/3; %esse h/3 que corresponde a dt/6 é usado somente no loop abaixo
 

@@ -48,4 +48,6 @@ ships_data
 % Consolidate the data into structures for the simulation.
 data_struc
 
+% Copy structure to Simulator folder
+dos(['copy simdata_' caseid '.mat ..\Simulator '])
 clear all;clc

@@ -1,5 +1,26 @@
 function [mu] = convolution_integral(K_tot,nu,t,ktime)
-% function [mu] = convolution_integral(K_tot,nu,t,ktime,newdt)
+% function [mu] = convolution_integral(K_tot,nu,t,ktime)
+% Calculate the convolution term in Cummins equation, given the retardation
+% function K_tot, the current velocity vector nu, the time instant t and
+% the time step ktime.
+% 
+% Input:
+% K_tot - previously generated structure with retardation functions and 
+% their respective duration.
+% nu - [2*ndof x l] velocity vector for both ships. The number of columns,
+% l, equals:
+%  - ktime, if t is lower than the retardation functions length, ltau
+%  - ltau, otherwise
+% It should be noted that if the ship keeps a mean velocity of motion in
+% some DOF for a long time, this mean velocity should be subtracted from nu
+% before using it in the function.
+% t - current time instant.
+% ktime - current time step.
+% 
+% Output:
+% mu - [ndof x 1] vector with the convolution integral calculated for the
+% current time step.
+
 % global variable
 % 
 % dt = variable.dt;
