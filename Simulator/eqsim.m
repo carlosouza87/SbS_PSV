@@ -131,9 +131,6 @@ for k1 = 1:2
         Fwf = data.ship(k1).Fwf;
         beta = 180/pi*norm02pi(betaw-psi); % wave incidence direction [deg]
         for k2 = 1:ndof
-            %            if (k2 == 1) && (t >= 2.6)
-            %                debug = 1;
-            %            end
             tau_waves1st(k2+ndof*(k1-1),1) = interp1(betaw1st,Fwf(ktime,:,k2),beta,'linear','extrap');
         end
     end
@@ -391,13 +388,17 @@ end
 
 
 %% Equations of motions
-
-if isimtype == 1
-    % Convolution integral calculation for Cummins equation
+    % Rigid-body inertia matrix for both ships
+    Mrb = [Mrb1 zeros(6,6);zeros(6,6) Mrb2];
     
-    % Read retardation functions from previously generated structure
+    % Hydrostatic restoration matrix for both ships
+    Ghd = [Ghd1 zeros(6,6);zeros(6,6) Ghd2];
+if isimtype == 1
+     
+    % Retardation functions from previously generated structure
     K=[data.hydro.K11 data.hydro.K12; data.hydro.K21 data.hydro.K22];
 
+    % Calculation of convolution integral for Cummins equation
     if newdt == 1
         nu_mem = [variable.ship(1).nu(:,1:ktime);variable.ship(2).nu(:,1:ktime)];
         [mu] = convolution_integral(K,nu_mem,t,ktime);
@@ -406,19 +407,31 @@ if isimtype == 1
         [mu] = variable.mu(:,ktime);
     end
     
+    % Infinite-frequency added inertia matrix for both ships
     A_inf = [data.hydro.A11_inf data.hydro.A12_inf;
-        data.hydro.A21_inf data.hydro.A22_inf];
-    
-    Mrb = [Mrb1 zeros(6,6);zeros(6,6) Mrb2];
-    Ghd = [Ghd1 zeros(6,6);zeros(6,6) Ghd2];
-    
+         data.hydro.A21_inf data.hydro.A22_inf];   
+     
+    % Vector of external loads
     tau_ext = tau_waves1st + tau_wavesmd + tau_wind + tau_curr + tau_hdsuction + tau_moor;
-    tau = tau_ext + tau_ctr;
-        
-    [etap,nup] = eqmot_cummins(eta,nu,rg(:,1),rg(:,2),Mrb,A_inf,Ghd,mu,tau);
+    tau = tau_ext + tau_ctr;  
     
+    % Equations of motions
+    [etap,nup] = eqmotions_6(eta,nu,rg(:,1),rg(:,2),Mrb,A_inf,Ghd,mu,tau);
+
 elseif isimtype == 2
-    error('LF + WF approach is not implemented!')
+    % Vector mu is dummy for isimtype and all elements must be set to zero
+    mu_dummy = zeros(2*ndof,1);
+    
+    % Zero-frequency added inertia matrix
+    A_0 = [data.hydro.A11 data.hydro.A12;
+         data.hydro.A21 data.hydro.A22]; 
+     
+    % Vector of external loads
+    tau_ext = tau_wavesmd + tau_wind + tau_curr + tau_hdsuction + tau_moor;
+    tau = tau_ext + tau_ctr;  
+    
+    % Equations of motions
+    [etap,nup] = eqmotions_6(eta,nu,rg(:,1),rg(:,2),Mrb,A_0,Ghd,mu_dummy,tau);
 end
 
 variable.etap(:,ktime) = etap;

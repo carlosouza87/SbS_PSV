@@ -326,10 +326,14 @@ elseif isimtype == 2
         for k1 = 1:6
             for k2 = 1:6
                 % Extrapolate the added masses for omg = 0 rad/s
-                A11(k1,k2) = interp1(omg,Aij_sorted(k1,k2,:),0,'spline','extrap');
-                A12(k1,k2) = interp1(omg,Aij_sorted(k1,k2+6,:),0,'spline','extrap');
-                A21(k1,k2) = interp1(omg,Aij_sorted(k1+6,k2,:),0,'spline','extrap');
-                A22(k1,k2) = interp1(omg,Aij_sorted(k1+6,k2+6,:),0,'spline','extrap');
+                A_interp = reshape(Aij_sorted(k1,k2,:),Nomg,1);
+                A11(k1,k2) = interp1(omg,A_interp,0,'spline','extrap');
+                A_interp = reshape(Aij_sorted(k1,k2+6,:),Nomg,1);
+                A12(k1,k2) = interp1(omg,A_interp,0,'spline','extrap');
+                A_interp = reshape(Aij_sorted(k1+6,k2,:),Nomg,1);
+                A21(k1,k2) = interp1(omg,A_interp,0,'spline','extrap');
+                A_interp = reshape(Aij_sorted(k1+6,k2+6,:),Nomg,1);
+                A22(k1,k2) = interp1(omg,A_interp,0,'spline','extrap');
             end
         end
     elseif omg_asmp == 1
