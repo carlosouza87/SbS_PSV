@@ -190,9 +190,9 @@ if isimtype == 1
             K11(k1,k2).tau = [0 tau11];
             K_aux = zeros(1,length(tau11));
             for k4 = 1:199
-                K_aux = K_aux + (2*pi./tau11.^2).*(delta_B11(k1,k2,k4)/delta_omg_e*(cos(omg_e(k4+1)*tau11)-cos(omg_e(k4)*tau11)));
+                K_aux = K_aux + (2./(pi*tau11).^2).*(delta_B11(k1,k2,k4)/delta_omg_e*(cos(omg_e(k4+1)*tau11)-cos(omg_e(k4)*tau11)));
             end
-            m1 = (2*pi./tau11);
+            m1 = 2./(pi*tau11);
             m2 = B11(k1,k2,200)*sin(omg_e(200)*tau11);
             K_aux = K_aux + m1.*m2;
             K11(k1,k2).K = [K11_0(k1,k2) K_aux];
@@ -202,9 +202,9 @@ if isimtype == 1
             K12(k1,k2).tau = [0 tau12];
             K_aux = zeros(1,length(tau12));
             for k4 = 1:199
-                K_aux = K_aux + (2*pi./tau12.^2).*(delta_B12(k1,k2,k4)/delta_omg_e*(cos(omg_e(k4+1)*tau12)-cos(omg_e(k4)*tau12)));
+                K_aux = K_aux + (2./(pi*tau12).^2).*(delta_B12(k1,k2,k4)/delta_omg_e*(cos(omg_e(k4+1)*tau12)-cos(omg_e(k4)*tau12)));
             end
-            m1 = (2*pi./tau12);
+            m1 = 2./(pi*tau12);
             m2 = B12(k1,k2,200)*sin(omg_e(200)*tau12);
             K_aux = K_aux + m1.*m2;
             K12(k1,k2).K = [K12_0(k1,k2) K_aux];
@@ -214,9 +214,9 @@ if isimtype == 1
             K21(k1,k2).tau = [0 tau21];
             K_aux = zeros(1,length(tau21));
             for k4 = 1:199
-                K_aux = K_aux + (2*pi./tau21.^2).*(delta_B21(k1,k2,k4)/delta_omg_e*(cos(omg_e(k4+1)*tau21)-cos(omg_e(k4)*tau21)));
+                K_aux = K_aux + (2./(pi*tau21).^2).*(delta_B21(k1,k2,k4)/delta_omg_e*(cos(omg_e(k4+1)*tau21)-cos(omg_e(k4)*tau21)));
             end
-            m1 = (2*pi./tau21);
+            m1 = 2./(pi*tau21);
             m2 = B21(k1,k2,200)*sin(omg_e(200)*tau21);
             K_aux = K_aux + m1.*m2;
             K21(k1,k2).K = [K21_0(k1,k2) K_aux];
@@ -226,9 +226,9 @@ if isimtype == 1
             K22(k1,k2).tau = [0 tau22];
             K_aux = zeros(1,length(tau22));
             for k4 = 1:199
-                K_aux = K_aux + (2*pi./tau22.^2).*(delta_B22(k1,k2,k4)/delta_omg_e*(cos(omg_e(k4+1)*tau22)-cos(omg_e(k4)*tau22)));
+                K_aux = K_aux + (2./(pi*tau22).^2).*(delta_B22(k1,k2,k4)/delta_omg_e*(cos(omg_e(k4+1)*tau22)-cos(omg_e(k4)*tau22)));
             end
-            m1 = (2*pi./tau22);
+            m1 = 2./(pi*tau22);
             m2 = B22(k1,k2,200)*sin(omg_e(200)*tau22);
             K_aux = K_aux + m1.*m2;
             K22(k1,k2).K = [K22_0(k1,k2) K_aux];

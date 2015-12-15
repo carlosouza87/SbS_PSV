@@ -25,7 +25,7 @@ variable.lt=lt;
 % Determine type of simulation, "isimtype": 
 % isimtype = 1, for Cummins equation 
 % isimtype = 2, for LF + WF superposition 
-flag.isimtype = 2;   
+flag.isimtype = 1;   
 
 % Determine number o degrees of freedom, "idof":
 % idof = 1, for 6 DOF
