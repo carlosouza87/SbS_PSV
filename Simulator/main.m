@@ -13,8 +13,8 @@ caseid = 'conjunto_10';
 
 %% Time parameters
 dt = 0.1;% time step [s]   
-tfinal = 500;% total simulation time [s]
-lt = tfinal/dt+1;   % number of time steps including zero []
+tfinal = 600;% total simulation time [s]
+lt = tfinal/dt;   % number of time steps including zero []
 tsim = 0:dt:tfinal; % time vector
 ktime = 1;          % time step [s]
 data.constants.dt = dt;
@@ -119,6 +119,12 @@ while t <= tfinal
     variable.ship(1).nu(:,ktime) = y(13:18,ktime);
     variable.ship(2).nu(:,ktime) = y(19:24,ktime);
     t
+end
+
+if flag.isimtype == 1
+    save mem_on variable
+else
+    save sup variable
 end
 
 texec = cputime - t1;

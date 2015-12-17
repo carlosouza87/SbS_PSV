@@ -55,14 +55,14 @@ if ktime > 1
                 for k3 = 1:ktime
                     Int(k3) = K(k3)*nu(k2,ktime-k3+1); % Integrand
                 end
-                mu(k1) = trapz(Int)*dt; % Convolution integral
+                mu(k1) = mu(k1) + trapz(Int)*dt; % Convolution integral
             else
                 k_fin = T/dt + 1; % End index
                 Int = zeros(1,k_fin); 
                 for k3 = 1:k_fin 
                    Int(k3) = K(k3)*nu(k2,k_fin-k3+1); % Integrand
                 end
-                mu(k1) = trapz(Int)*dt; % Convolution integral
+                mu(k1) = mu(k1) + trapz(Int)*dt; % Convolution integral
             end
         end
     end

@@ -402,6 +402,7 @@ if isimtype == 1
     if newdt == 1
         nu_mem = [variable.ship(1).nu(:,1:ktime);variable.ship(2).nu(:,1:ktime)];
         [mu] = convolution_integral(K,nu_mem,t,ktime);
+%      mu = zeros(12,1);
         variable.mu(:,ktime) = mu;
     else
         [mu] = variable.mu(:,ktime);
