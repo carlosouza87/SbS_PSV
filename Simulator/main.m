@@ -13,7 +13,7 @@ caseid = 'conjunto_10';
 
 %% Time parameters
 dt = 0.1;% time step [s]   
-tfinal = 600;% total simulation time [s]
+tfinal = 3600;% total simulation time [s]
 lt = tfinal/dt;   % number of time steps including zero []
 tsim = 0:dt:tfinal; % time vector
 ktime = 1;          % time step [s]
