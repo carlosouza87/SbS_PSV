@@ -388,21 +388,21 @@ end
 
 
 %% Equations of motions
-    % Rigid-body inertia matrix for both ships
-    Mrb = [Mrb1 zeros(6,6);zeros(6,6) Mrb2];
-    
-    % Hydrostatic restoration matrix for both ships
-    Ghd = [Ghd1 zeros(6,6);zeros(6,6) Ghd2];
+% Rigid-body inertia matrix for both ships
+Mrb = [Mrb1 zeros(6,6);zeros(6,6) Mrb2];
+
+% Hydrostatic restoration matrix for both ships
+Ghd = [Ghd1 zeros(6,6);zeros(6,6) Ghd2];
 if isimtype == 1
-     
+    
     % Retardation functions from previously generated structure
     K=[data.hydro.K11 data.hydro.K12; data.hydro.K21 data.hydro.K22];
-
+    
     % Calculation of convolution integral for Cummins equation
     if newdt == 1
         nu_mem = [variable.ship(1).nu(:,1:ktime);variable.ship(2).nu(:,1:ktime)];
         [mu] = convolution_integral(K,nu_mem,t,ktime);
-%      mu = zeros(12,1);
+        %      mu = zeros(12,1);
         variable.mu(:,ktime) = mu;
     else
         [mu] = variable.mu(:,ktime);
@@ -410,26 +410,30 @@ if isimtype == 1
     
     % Infinite-frequency added inertia matrix for both ships
     A_inf = [data.hydro.A11_inf data.hydro.A12_inf;
-         data.hydro.A21_inf data.hydro.A22_inf];   
-     
+        data.hydro.A21_inf data.hydro.A22_inf];
+    
     % Vector of external loads
+    tau_waves1st(4:6) = tau_waves1st(4:6)/10;
     tau_ext = tau_waves1st + tau_wavesmd + tau_wind + tau_curr + tau_hdsuction + tau_moor;
-    tau = tau_ext + tau_ctr;  
+    tau = tau_ext + tau_ctr;
     
     % Equations of motions
     [etap,nup] = eqmotions_6(eta,nu,rg(:,1),rg(:,2),Mrb,A_inf,Ghd,mu,tau);
-
+    
 elseif isimtype == 2
     % Vector mu is dummy for isimtype and all elements must be set to zero
     mu_dummy = zeros(2*ndof,1);
     
     % Zero-frequency added inertia matrix
     A_0 = [data.hydro.A11 data.hydro.A12;
-         data.hydro.A21 data.hydro.A22]; 
-     
+        data.hydro.A21 data.hydro.A22];
+    
     % Vector of external loads
+    if ktime > 100
+        a=1;
+    end
     tau_ext = tau_wavesmd + tau_wind + tau_curr + tau_hdsuction + tau_moor;
-    tau = tau_ext + tau_ctr;  
+    tau = tau_ext + tau_ctr;
     
     % Equations of motions
     [etap,nup] = eqmotions_6(eta,nu,rg(:,1),rg(:,2),Mrb,A_0,Ghd,mu_dummy,tau);

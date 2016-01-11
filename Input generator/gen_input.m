@@ -16,7 +16,7 @@ clear all;close all;clc
 % Determine type of simulation, "isimtype": 
 % isimtype = 1, for Cummins equation 
 % isimtype = 2, for LF + WF superposition 
-isimtype = 1;  
+isimtype = 2;  
 
 % Determine string with the name of the WAMIT output, without any extension
 caseid = ['conjunto_10']; % Water density [kg/m^3]

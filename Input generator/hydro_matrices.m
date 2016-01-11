@@ -177,11 +177,11 @@ if isimtype == 1
     %            T22(k1,k2) = 2*sqrt((sum(abs(delta_B22(k1,k2,:))))/(pi*delta_omg_e*eps*K22_0(k1,k2,1)));
     %        end
     %    end
-    % Fix all limit values to 120 s
-    T11 = ones(6,6)*120;
-    T12 = ones(6,6)*120;
-    T21 = ones(6,6)*120;
-    T22 = ones(6,6)*120;
+    % Fix all limit values to 60 s
+    T11 = ones(6,6)*60;
+    T12 = ones(6,6)*60;
+    T21 = ones(6,6)*60;
+    T22 = ones(6,6)*60;
     
     % Calculation of retardation functions for tau > 0 s (Journee, 1993, sec. 4.4)
     for k1 = 1:6

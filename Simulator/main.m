@@ -13,7 +13,7 @@ caseid = 'conjunto_10';
 
 %% Time parameters
 dt = 0.1;% time step [s]   
-tfinal = 3600;% total simulation time [s]
+tfinal = 600;% total simulation time [s]
 lt = tfinal/dt;   % number of time steps including zero []
 tsim = 0:dt:tfinal; % time vector
 ktime = 1;          % time step [s]
@@ -25,7 +25,7 @@ variable.lt=lt;
 % Determine type of simulation, "isimtype": 
 % isimtype = 1, for Cummins equation 
 % isimtype = 2, for LF + WF superposition 
-flag.isimtype = 1;   
+flag.isimtype = 2;   
 
 % Determine number o degrees of freedom, "idof":
 % idof = 1, for 6 DOF

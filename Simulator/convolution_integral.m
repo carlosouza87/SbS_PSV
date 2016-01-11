@@ -21,56 +21,43 @@ function [mu] = convolution_integral(K_tot,nu,t,ktime)
 % mu - [ndof x 1] vector with the convolution integral calculated for the
 % current time step.
 
-% global variable
-% 
-% dt = variable.dt;
 dt = 0.1;
-% lt = variable.lt;
-
-% Vector for memory effects
 mu = zeros(12,1);
-
-% if ktime==1
-%     variable.mu = zeros (12,lt);
-% else
-%     nu = variable.nu;
-%     G = zeros(12,ktime);
-% end
-
 % if ktime > 1 && newdt == 1
+T = K_tot(1,1).T;
 if ktime > 1
+    if t < T
+        nu_m = mean(nu,2);
+        delta_nu = nu - repmat(nu_m,1,ktime);
+    else
+        k_fin = T/dt; % End index
+        Nw = 61;
+        wts = [1/(2*Nw) repmat(1/Nw,1,Nw) 1/(2*Nw)];
+        nu_m = zeros(12,k_fin+1);
+        for k3 = 1:12
+            nu_m(k3,:) = mean_nu(nu(k3,ktime-k_fin:ktime),wts);
+        end
+        delta_nu = nu(:,ktime-k_fin:ktime) - nu_m;
+    end    
+    
     for k1 = 1:12
         for k2 = 1:12
-            K = K_tot(k1,k2).K;
-            T = K_tot(k1,k2).T;
+            K = K_tot(k1,k2).K;            
             % While the current simulation time (t) is shorter than the
-            % duration (t) of the retardation function (K), the integrand  
-            % length is limited to the current simulation time index (ktime), 
+            % duration (t) of the retardation function (K), the integrand
+            % length is limited to the current simulation time index (ktime),
             % such that its size matches the current size of the velocities
             % vector (nu). When the simulation time surpasses T the
             % integrand length takes length T/dt + 1 and the retardation
             % function is therefore evaluated for the whole duration of K.
             if t < T
-                Int = zeros(1,ktime);
-                for k3 = 1:ktime
-                    Int(k3) = K(k3)*nu(k2,ktime-k3+1); % Integrand
-                end
+                Int = K(1:ktime).*fliplr(delta_nu(k2,:));
                 mu(k1) = mu(k1) + trapz(Int)*dt; % Convolution integral
             else
-                k_fin = T/dt + 1; % End index
-                Int = zeros(1,k_fin); 
-                for k3 = 1:k_fin 
-                   Int(k3) = K(k3)*nu(k2,k_fin-k3+1); % Integrand
-                end
+                Int = K.*fliplr(delta_nu(k2,1:k_fin+1));
                 mu(k1) = mu(k1) + trapz(Int)*dt; % Convolution integral
             end
         end
     end
     
-    %     variable.mu(:,ktime) =  mu(:,1);
-    %  variable.mu(:,ktime) = variable.mu(:,ktime-1)+ mu(:,1);
 end
-
-
-
-

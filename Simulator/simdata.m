@@ -21,16 +21,16 @@ data.constants.g = g;
 data.constants.rho_air = rho_air;   
 
 %% Initial state vectors
-data.ship(1).eta0 = [0;0;2;0*pi/180;0*pi/180;0*pi/180];
+data.ship(1).eta0 = [0;0;0;0*pi/180;0*pi/180;0*pi/180];
 data.ship(1).nu0 = [0;0;0;0;0;0];
 
 data.ship(2).eta0 = [0;0;0;0*pi/180;0;0];
 data.ship(2).nu0 = [0;0;0;0;0;0];
 
 %% Environment data
-betaw = 195;    % Wave incidence direction [deg]
-Hs = 5.0;       % Significant wave height [m]
-Tp = 9.0;       % Wave peak period [s]
+betaw = 180;    % Wave incidence direction [deg]
+Hs = 3.0;       % Significant wave height [m]
+Tp = 10.0;      % Wave peak period [s]
 gammaw = betaw; % Wind incidence direction [deg]
 Uw = 10.0;      % Wind velocity [m/s]
 alphac = 180;   % Current incidence direction [deg]
